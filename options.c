@@ -48,6 +48,7 @@ int append_mode = 0;
 int keep_dirlinks = 0;
 int copy_dirlinks = 0;
 int copy_links = 0;
+int copy_devices = 0;
 int preserve_links = 0;
 int preserve_hard_links = 0;
 int preserve_acls = 0;
@@ -348,6 +349,7 @@ void usage(enum logcode F)
   rprintf(F," -o, --owner                 preserve owner (super-user only)\n");
   rprintf(F," -g, --group                 preserve group\n");
   rprintf(F,"     --devices               preserve device files (super-user only)\n");
+  rprintf(F,"     --copy-devices          copy device contents as regular file\n");
   rprintf(F,"     --specials              preserve special files\n");
   rprintf(F," -D                          same as --devices --specials\n");
   rprintf(F," -t, --times                 preserve modification times\n");
@@ -506,6 +508,7 @@ static struct poptOption long_options[] = {
   {"no-D",             0,  POPT_ARG_NONE,   0, OPT_NO_D, 0, 0 },
   {"devices",          0,  POPT_ARG_VAL,    &preserve_devices, 1, 0, 0 },
   {"no-devices",       0,  POPT_ARG_VAL,    &preserve_devices, 0, 0, 0 },
+  {"copy-devices",     0,  POPT_ARG_NONE,   &copy_devices, 0, 0, 0 },
   {"specials",         0,  POPT_ARG_VAL,    &preserve_specials, 1, 0, 0 },
   {"no-specials",      0,  POPT_ARG_VAL,    &preserve_specials, 0, 0, 0 },
   {"links",           'l', POPT_ARG_VAL,    &preserve_links, 1, 0, 0 },
@@ -2073,6 +2076,9 @@ void server_options(char **args, int *argc_p)
 		args[ac++] = "--remove-source-files";
 	else if (remove_source_files)
 		args[ac++] = "--remove-sent-files";
+
+	if (copy_devices)
+		args[ac++] = "--copy-devices";
 
 	if (ac > MAX_SERVER_ARGS) { /* Not possible... */
 		rprintf(FERROR, "argc overflow in server_options().\n");

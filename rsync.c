@@ -34,6 +34,7 @@ extern int preserve_xattrs;
 extern int preserve_perms;
 extern int preserve_executability;
 extern int preserve_times;
+extern int copy_devices;
 extern int am_root;
 extern int am_server;
 extern int am_sender;
@@ -326,7 +327,8 @@ int read_ndx_and_attrs(int f_in, int *iflag_ptr, uchar *type_ptr,
 
 	if (iflags & ITEM_TRANSFER) {
 		int i = ndx - cur_flist->ndx_start;
-		if (i < 0 || !S_ISREG(cur_flist->files[i]->mode)) {
+		struct file_struct *file = cur_flist->files[i];
+		if (i < 0 || !(S_ISREG(file->mode) || (copy_devices && IS_DEVICE(file->mode)))) {
 			rprintf(FERROR,
 				"received request to transfer non-regular file: %d [%s]\n",
 				ndx, who_am_i());

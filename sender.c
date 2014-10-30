@@ -309,6 +309,20 @@ void send_files(int f_in, int f_out)
 			exit_cleanup(RERR_PROTOCOL);
 		}
 
+		/* On Matt's computer, st_size is falsely 0 for most devices.
+		 * If this happens, try harder to determine the actual device size. */
+		if (IS_DEVICE(st.st_mode) && st.st_size == 0) {
+			OFF_T off = lseek(fd, 0, SEEK_END);
+			if (off == (OFF_T) -1)
+				rsyserr(FERROR, errno, "failed to seek to end of %s to determine size", fname);
+			else {
+				st.st_size = off;
+				off = lseek(fd, 0, SEEK_SET);
+				if (off != 0)
+					rsyserr(FERROR, errno, "failed to seek back to beginning of %s to read it", fname);
+			}
+		}
+
 		if (st.st_size) {
 			int32 read_size = MAX(s->blength * 3, MAX_MAP_SIZE);
 			mbuf = map_file(fd, st.st_size, read_size, s->blength);

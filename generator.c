@@ -39,6 +39,7 @@ extern int preserve_acls;
 extern int preserve_xattrs;
 extern int preserve_links;
 extern int preserve_devices;
+extern int copy_devices;
 extern int preserve_specials;
 extern int preserve_hard_links;
 extern int preserve_executability;
@@ -1751,7 +1752,7 @@ static void recv_generator(char *fname, struct file_struct *file, int ndx,
 		goto cleanup;
 	}
 
-	if (!S_ISREG(file->mode)) {
+	if (!(S_ISREG(file->mode) || (copy_devices && IS_DEVICE(file->mode)))) {
 		if (solo_file)
 			fname = f_name(file, NULL);
 		rprintf(FINFO, "skipping non-regular file \"%s\"\n", fname);
