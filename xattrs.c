@@ -29,6 +29,7 @@ extern int dry_run;
 extern int am_root;
 extern int am_sender;
 extern int am_generator;
+extern int copy_devices;
 extern int read_only;
 extern int list_only;
 extern int preserve_xattrs;
@@ -1078,11 +1079,43 @@ int set_stat_xattr(const char *fname, struct file_struct *file, mode_t new_mode)
 	return 0;
 }
 
+void update_device_size(int fd, STRUCT_STAT *fst)
+{
+       /* On Matt's computer, st_size is falsely 0 for most devices.
+	* If this happens, try harder to determine the actual device size. */
+       if (IS_DEVICE(fst->st_mode) && fst->st_size == 0) {
+	       OFF_T off = lseek(fd, 0, SEEK_END);
+	       if (off == (OFF_T) -1)
+		       rsyserr(FERROR, errno, "failed to seek to end to determine size");
+	       else {
+		       fst->st_size = off;
+		       off = lseek(fd, 0, SEEK_SET);
+		       if (off != 0)
+			       rsyserr(FERROR, errno, "failed to seek back to beginning to read it");
+	       }
+       }
+}
+
+void update_device_fsize(const char *fname, STRUCT_STAT *fst)
+{
+	int fd;
+
+	fd = open(fname, O_RDONLY);
+	if (fd < 0) {
+		rsyserr(FERROR_XFER, errno, "open failed on %s",
+			full_fname(fname));
+		return;
+	}
+	update_device_size(fd, fst);
+	close(fd);
+}
+
 int x_stat(const char *fname, STRUCT_STAT *fst, STRUCT_STAT *xst)
 {
 	int ret = do_stat(fname, fst);
 	if ((ret < 0 || get_stat_xattr(fname, -1, fst, xst) < 0) && xst)
 		xst->st_mode = 0;
+	update_device_fsize(fname, fst);
 	return ret;
 }
 
@@ -1091,6 +1124,7 @@ int x_lstat(const char *fname, STRUCT_STAT *fst, STRUCT_STAT *xst)
 	int ret = do_lstat(fname, fst);
 	if ((ret < 0 || get_stat_xattr(fname, -1, fst, xst) < 0) && xst)
 		xst->st_mode = 0;
+	update_device_fsize(fname, fst);
 	return ret;
 }
 
@@ -1099,6 +1133,7 @@ int x_fstat(int fd, STRUCT_STAT *fst, STRUCT_STAT *xst)
 	int ret = do_fstat(fd, fst);
 	if ((ret < 0 || get_stat_xattr(NULL, fd, fst, xst) < 0) && xst)
 		xst->st_mode = 0;
+	update_device_size(fd, fst);
 	return ret;
 }
 
