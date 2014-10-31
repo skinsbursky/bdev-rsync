@@ -1668,7 +1668,7 @@ static void recv_generator(char *fname, struct file_struct *file, int ndx,
 		goto cleanup;
 	}
 
-	if ((am_root && preserve_devices && IS_DEVICE(file->mode))
+	if ((am_root && preserve_devices && (IS_DEVICE(file->mode) && !copy_devices))
 	 || (preserve_specials && IS_SPECIAL(file->mode))) {
 		dev_t rdev;
 		if (IS_DEVICE(file->mode)) {
