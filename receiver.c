@@ -34,6 +34,7 @@ extern int logfile_format_has_i;
 extern int csum_length;
 extern int read_batch;
 extern int write_batch;
+extern int copy_devices;
 extern int batch_gen_fd;
 extern int protocol_version;
 extern int relative_paths;
@@ -306,9 +307,16 @@ static int receive_data(int f_in, char *fname_r, int fd_r, OFF_T size_r,
 		goto report_write_error;
 
 #ifdef HAVE_FTRUNCATE
-	if (inplace && fd != -1 && do_ftruncate(fd, offset) < 0) {
-		rsyserr(FERROR_XFER, errno, "ftruncate failed on %s",
-			full_fname(fname));
+	if (inplace && fd != -1) {
+		struct stat st;
+		int err;
+
+		err = fstat(fd, &st);
+		if (!err && !(IS_DEVICE(st.st_mode) && copy_devices)) {
+			if (ftruncate(fd, offset) < 0)
+				rsyserr(FERROR_XFER, errno, "ftruncate failed on %s",
+						full_fname(fname));
+		}
 	}
 #endif
 
