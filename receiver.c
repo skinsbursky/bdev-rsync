@@ -682,6 +682,9 @@ int recv_files(int f_in, char *local_name)
 			continue;
 		}
 
+		if ((IS_DEVICE(st.st_mode) && copy_devices))
+			update_device_size(fd1, &st);
+
 		if (fd1 != -1 && S_ISDIR(st.st_mode) && fnamecmp == fname) {
 			/* this special handling for directories
 			 * wouldn't be necessary if robust_rename()
@@ -697,7 +700,8 @@ int recv_files(int f_in, char *local_name)
 			continue;
 		}
 
-		if (fd1 != -1 && !S_ISREG(st.st_mode)) {
+		if (fd1 != -1 && !S_ISREG(st.st_mode) &&
+			!(IS_DEVICE(st.st_mode) && copy_devices)) {
 			close(fd1);
 			fd1 = -1;
 		}
