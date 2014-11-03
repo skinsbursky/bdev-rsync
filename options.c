@@ -174,6 +174,7 @@ char *sockopts = NULL;
 char *usermap = NULL;
 char *groupmap = NULL;
 int rsync_port = 0;
+int offset_in_mb = 0;
 int compare_dest = 0;
 int copy_dest = 0;
 int link_dest = 0;
@@ -708,6 +709,7 @@ void usage(enum logcode F)
   rprintf(F," -g, --group                 preserve group\n");
   rprintf(F,"     --devices               preserve device files (super-user only)\n");
   rprintf(F,"     --copy-devices          copy device contents as regular file\n");
+  rprintf(F,"     --offset-in-mb          offset to sync start in megabytes\n");
   rprintf(F,"     --specials              preserve special files\n");
   rprintf(F," -D                          same as --devices --specials\n");
   rprintf(F," -t, --times                 preserve modification times\n");
@@ -890,6 +892,7 @@ static struct poptOption long_options[] = {
   {"devices",          0,  POPT_ARG_VAL,    &preserve_devices, 1, 0, 0 },
   {"no-devices",       0,  POPT_ARG_VAL,    &preserve_devices, 0, 0, 0 },
   {"copy-devices",     0,  POPT_ARG_NONE,   &copy_devices, 0, 0, 0 },
+  {"offset-in-mb",     0,  POPT_ARG_INT,    &offset_in_mb, 0, 0, 0 },
   {"specials",         0,  POPT_ARG_VAL,    &preserve_specials, 1, 0, 0 },
   {"no-specials",      0,  POPT_ARG_VAL,    &preserve_specials, 0, 0, 0 },
   {"links",           'l', POPT_ARG_VAL,    &preserve_links, 1, 0, 0 },
@@ -2768,6 +2771,12 @@ void server_options(char **args, int *argc_p)
 
 	if (copy_devices)
 		args[ac++] = "--copy-devices";
+
+	if (offset_in_mb) {
+		if (asprintf(&arg, "--offset-in-mb=%d", offset_in_mb) < 0)
+			goto oom;
+		args[ac++] = arg;
+	}
 
 	if (ac > MAX_SERVER_ARGS) { /* Not possible... */
 		rprintf(FERROR, "argc overflow in server_options().\n");
