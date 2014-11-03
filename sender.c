@@ -32,6 +32,7 @@ extern int logfile_format_has_i;
 extern int want_xattr_optim;
 extern int csum_length;
 extern int append_mode;
+extern int offset_in_mb;
 extern int io_error;
 extern int flist_eof;
 extern int allowed_lull;
@@ -371,12 +372,8 @@ void send_files(int f_in, int f_out)
 			OFF_T off = lseek(fd, 0, SEEK_END);
 			if (off == (OFF_T) -1)
 				rsyserr(FERROR, errno, "failed to seek to end of %s to determine size", fname);
-			else {
+			else
 				st.st_size = off;
-				off = lseek(fd, 0, SEEK_SET);
-				if (off != 0)
-					rsyserr(FERROR, errno, "failed to seek back to beginning of %s to read it", fname);
-			}
 		}
 
 		if (st.st_size) {

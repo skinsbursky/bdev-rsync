@@ -159,7 +159,7 @@ static void hash_search(int f,struct sum_struct *s,
 
 	k = (int32)MIN(len, (OFF_T)s->blength);
 
-	map = (schar *)map_ptr(buf, 0, k);
+	map = (schar *)map_ptr(buf, buf->p_offset, k);
 
 	sum = get_checksum1((char *)map, k);
 	s1 = sum & 0xFFFF;
@@ -167,7 +167,7 @@ static void hash_search(int f,struct sum_struct *s,
 	if (DEBUG_GTE(DELTASUM, 3))
 		rprintf(FINFO, "sum=%.8x k=%ld\n", sum, (long)k);
 
-	offset = aligned_offset = aligned_i = 0;
+	offset = aligned_offset = aligned_i = buf->p_offset;
 
 	end = len + 1 - s->sums[s->count-1].len;
 
@@ -360,7 +360,7 @@ static void hash_search(int f,struct sum_struct *s,
  **/
 void match_sums(int f, struct sum_struct *s, struct map_struct *buf, OFF_T len)
 {
-	last_match = 0;
+	last_match = buf->p_offset;
 	false_alarms = 0;
 	hash_hits = 0;
 	matches = 0;
