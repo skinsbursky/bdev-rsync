@@ -825,7 +825,7 @@ enum {OPT_VERSION = 1000, OPT_DAEMON, OPT_SENDER, OPT_EXCLUDE, OPT_EXCLUDE_FROM,
       OPT_READ_BATCH, OPT_WRITE_BATCH, OPT_ONLY_WRITE_BATCH, OPT_MAX_SIZE,
       OPT_NO_D, OPT_APPEND, OPT_NO_ICONV, OPT_INFO, OPT_DEBUG,
       OPT_USERMAP, OPT_GROUPMAP, OPT_CHOWN, OPT_BWLIMIT,
-      OPT_SERVER, OPT_REFUSED_BASE = 9000};
+      OPT_SERVER, OPT_COPY_DEVICES, OPT_REFUSED_BASE = 9000};
 
 static struct poptOption long_options[] = {
   /* longName, shortName, argInfo, argPtr, value, descrip, argDesc */
@@ -891,7 +891,7 @@ static struct poptOption long_options[] = {
   {"no-D",             0,  POPT_ARG_NONE,   0, OPT_NO_D, 0, 0 },
   {"devices",          0,  POPT_ARG_VAL,    &preserve_devices, 1, 0, 0 },
   {"no-devices",       0,  POPT_ARG_VAL,    &preserve_devices, 0, 0, 0 },
-  {"copy-devices",     0,  POPT_ARG_NONE,   &copy_devices, 0, 0, 0 },
+  {"copy-devices",     0,  POPT_ARG_NONE,   &copy_devices, OPT_COPY_DEVICES, 0, 0 },
   {"offset-in-mb",     0,  POPT_ARG_INT,    &offset_in_mb, 0, 0, 0 },
   {"specials",         0,  POPT_ARG_VAL,    &preserve_specials, 1, 0, 0 },
   {"no-specials",      0,  POPT_ARG_VAL,    &preserve_specials, 0, 0, 0 },
@@ -1757,6 +1757,13 @@ int parse_arguments(int *argc_p, const char ***argv_p)
 				if (asprintf(&groupmap, "*:%s", arg) < 0)
 					out_of_memory("parse_arguments");
 				groupmap_via_chown = True;
+			}
+			break;
+		case OPT_COPY_DEVICES:
+			if (!inplace) {
+				snprintf(err_buf, sizeof err_buf,
+					    "You can only specify --copy-devices with prior --inplace option\n");
+				return 0;
 			}
 			break;
 		}
