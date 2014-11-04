@@ -152,7 +152,8 @@ static void hash_search(int f,struct sum_struct *s,
 	 * coding of the output to work more efficiently. */
 	want_i = 0;
 
-	offset = aligned_offset = aligned_i = buf->seek_offset;
+	offset = aligned_offset = buf->seek_offset;
+	aligned_i = 0;
 
 	if (DEBUG_GTE(DELTASUM, 2)) {
 		rprintf(FINFO, "hash search b=%ld range=%s-%s\n",
