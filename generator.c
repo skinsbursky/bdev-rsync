@@ -40,6 +40,7 @@ extern int preserve_xattrs;
 extern int preserve_links;
 extern int preserve_devices;
 extern int copy_devices;
+extern int offset_in_mb;
 extern int preserve_specials;
 extern int preserve_hard_links;
 extern int preserve_executability;
@@ -688,9 +689,9 @@ static int generate_and_send_sums(int fd, OFF_T len, int f_out, int f_copy)
 	int32 i;
 	struct map_struct *mapbuf;
 	struct sum_struct sum;
-	OFF_T offset = 0;
+	OFF_T offset = MB_TO_SIZE(offset_in_mb);
 
-	sum_sizes_sqroot(&sum, len);
+	sum_sizes_sqroot(&sum, len - offset);
 	if (sum.count < 0)
 		return -1;
 	write_sum_head(f_out, &sum);
@@ -1846,8 +1847,9 @@ static void recv_generator(char *fname, struct file_struct *file, int ndx,
 	}
 
 	if (DEBUG_GTE(DELTASUM, 3)) {
-		rprintf(FINFO, "gen mapped %s of size %s\n",
-			fnamecmp, big_num(sx.st.st_size));
+		rprintf(FINFO, "gen mapped %s of range %s - %s\n",
+			fnamecmp, big_num(MB_TO_SIZE(offset_in_mb)),
+			big_num(sx.st.st_size));
 	}
 
 	if (DEBUG_GTE(DELTASUM, 2))

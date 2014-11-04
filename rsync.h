@@ -846,6 +846,7 @@ struct sum_struct {
 
 struct map_struct {
 	OFF_T file_size;	/* File size (from stat)		*/
+	OFF_T seek_offset;
 	OFF_T p_offset;		/* Window start				*/
 	OFF_T p_fd_offset;	/* offset of cursor in fd ala lseek	*/
 	char *p;		/* Window pointer			*/
@@ -1292,3 +1293,5 @@ char *getpass(const char *prompt);
 #ifdef MAINTAINER_MODE
 const char *get_panic_action(void);
 #endif
+
+#define MB_TO_SIZE(mb)         (mb << 20)

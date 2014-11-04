@@ -237,7 +237,7 @@ static int receive_data(int f_in, char *fname_r, int fd_r, OFF_T size_r,
 	struct map_struct *mapbuf;
 	struct sum_struct sum;
 	int32 len;
-	OFF_T offset = 0;
+	OFF_T offset = MB_TO_SIZE(offset_in_mb);
 	OFF_T offset2;
 	char *data;
 	int32 i;
@@ -265,8 +265,9 @@ static int receive_data(int f_in, char *fname_r, int fd_r, OFF_T size_r,
 		int32 read_size = MAX(sum.blength * 2, 16*1024);
 		mapbuf = map_file(fd_r, size_r, read_size, sum.blength);
 		if (DEBUG_GTE(DELTASUM, 2)) {
-			rprintf(FINFO, "recv mapped %s of size %s\n",
-				fname_r, big_num(size_r));
+			rprintf(FINFO, "recv mapped %s of range %s-%s\n",
+				fname_r, big_num(mapbuf->seek_offset),
+				big_num(size_r));
 		}
 	} else
 		mapbuf = NULL;
@@ -326,7 +327,7 @@ static int receive_data(int f_in, char *fname_r, int fd_r, OFF_T size_r,
 		}
 
 		i = -(i+1);
-		offset2 = i * (OFF_T)sum.blength;
+		offset2 = i * (OFF_T)sum.blength + MB_TO_SIZE(offset_in_mb);
 		len = sum.blength;
 		if (i == (int)sum.count-1 && sum.remainder != 0)
 			len = sum.remainder;
