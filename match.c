@@ -152,14 +152,16 @@ static void hash_search(int f,struct sum_struct *s,
 	 * coding of the output to work more efficiently. */
 	want_i = 0;
 
+	offset = aligned_offset = aligned_i = buf->seek_offset;
+
 	if (DEBUG_GTE(DELTASUM, 2)) {
-		rprintf(FINFO, "hash search b=%ld len=%s\n",
-			(long)s->blength, big_num(len));
+		rprintf(FINFO, "hash search b=%ld range=%s-%s\n",
+			(long)s->blength, big_num(offset), big_num(len));
 	}
 
-	k = (int32)MIN(len, (OFF_T)s->blength);
+	k = (int32)MIN(len - offset, (OFF_T)s->blength);
 
-	map = (schar *)map_ptr(buf, buf->p_offset, k);
+	map = (schar *)map_ptr(buf, offset, k);
 
 	sum = get_checksum1((char *)map, k);
 	s1 = sum & 0xFFFF;
@@ -167,13 +169,11 @@ static void hash_search(int f,struct sum_struct *s,
 	if (DEBUG_GTE(DELTASUM, 3))
 		rprintf(FINFO, "sum=%.8x k=%ld\n", sum, (long)k);
 
-	offset = aligned_offset = aligned_i = buf->p_offset;
-
 	end = len + 1 - s->sums[s->count-1].len;
 
 	if (DEBUG_GTE(DELTASUM, 3)) {
-		rprintf(FINFO, "hash search s->blength=%ld len=%s count=%s\n",
-			(long)s->blength, big_num(len), big_num(s->count));
+		rprintf(FINFO, "hash search s->blength=%ld range=%s-%s count=%s\n",
+			(long)s->blength, big_num(offset), big_num(len), big_num(s->count));
 	}
 
 	do {
@@ -360,18 +360,17 @@ static void hash_search(int f,struct sum_struct *s,
  **/
 void match_sums(int f, struct sum_struct *s, struct map_struct *buf, OFF_T len)
 {
-	last_match = buf->p_offset;
+	last_match = buf->seek_offset;
 	false_alarms = 0;
 	hash_hits = 0;
 	matches = 0;
 	data_transfer = 0;
 
 	sum_init(checksum_seed);
-
 	if (append_mode > 0) {
 		if (append_mode == 2) {
 			OFF_T j = 0;
-			for (j = CHUNK_SIZE; j < s->flength; j += CHUNK_SIZE) {
+			for (j = buf->seek_offset + CHUNK_SIZE; j < s->flength; j += CHUNK_SIZE) {
 				if (buf && INFO_GTE(PROGRESS, 1))
 					show_progress(last_match, buf->file_size);
 				sum_update(map_ptr(buf, last_match, CHUNK_SIZE),
@@ -385,7 +384,7 @@ void match_sums(int f, struct sum_struct *s, struct map_struct *buf, OFF_T len)
 				sum_update(map_ptr(buf, last_match, n), n);
 			}
 		}
-		last_match = s->flength;
+		last_match = buf->seek_offset + s->flength;
 		s->count = 0;
 	}
 

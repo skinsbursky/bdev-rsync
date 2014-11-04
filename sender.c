@@ -66,7 +66,7 @@ static struct sum_struct *receive_sums(int f)
 	struct sum_struct *s;
 	int32 i;
 	int lull_mod = protocol_version >= 31 ? 0 : allowed_lull * 5;
-	OFF_T offset = 0;
+	OFF_T offset = MB_TO_SIZE(offset_in_mb);
 
 	if (!(s = new(struct sum_struct)))
 		out_of_memory("receive_sums");
@@ -372,8 +372,12 @@ void send_files(int f_in, int f_out)
 			OFF_T off = lseek(fd, 0, SEEK_END);
 			if (off == (OFF_T) -1)
 				rsyserr(FERROR, errno, "failed to seek to end of %s to determine size", fname);
-			else
+			else {
 				st.st_size = off;
+				off = lseek(fd, 0, SEEK_SET);
+				if (off != 0)
+					rsyserr(FERROR, errno, "failed to seek back to beginning of %s to read it", fname);
+			}
 		}
 
 		if (st.st_size) {
@@ -383,8 +387,8 @@ void send_files(int f_in, int f_out)
 			mbuf = NULL;
 
 		if (DEBUG_GTE(DELTASUM, 2)) {
-			rprintf(FINFO, "send_files mapped %s%s%s of size %s\n",
-				path,slash,fname, big_num(st.st_size));
+			rprintf(FINFO, "send_files mapped %s%s%s of range %s - %s\n",
+				path,slash,fname, big_num(mbuf->seek_offset), big_num(st.st_size));
 		}
 
 		write_ndx_and_attrs(f_out, ndx, iflags, fname, file,
