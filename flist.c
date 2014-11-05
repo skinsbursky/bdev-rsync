@@ -43,6 +43,7 @@ extern int filesfrom_fd;
 extern int one_file_system;
 extern int copy_dirlinks;
 extern int copy_devices;
+extern int offset_in_mb;
 extern int preserve_uid;
 extern int preserve_gid;
 extern int preserve_acls;
@@ -1361,6 +1362,16 @@ struct file_struct *make_file(const char *fname, struct file_list *flist,
 	} else if (IS_SPECIAL(st.st_mode))
 		st.st_size = 0;
 #endif
+
+	if (st.st_size < MB_TO_SIZE(offset_in_mb)) {
+		rprintf(FERROR_XFER,
+		    "[%s] offset is greated than file size: %s < %s\n",
+		    who_am_i(),
+		    comma_num(MB_TO_SIZE(offset_in_mb)),
+		    comma_num(st.st_size));
+
+		exit_cleanup(RERR_FILEIO);
+	}
 
 	file->flags = flags;
 	file->modtime = st.st_mtime;
