@@ -35,8 +35,12 @@
 
 extern int sparse_files;
 extern int offset_in_mb;
+extern int file_bwlimit;
+extern int file_bwlimitmax;
 
 static OFF_T sparse_seek = 0;
+
+extern void sleep_for_limit(int bytes_written, int limit);
 
 int sparse_end(int f, OFF_T size)
 {
@@ -115,6 +119,8 @@ int flush_write_file(int f)
 		}
 		wf_writeBufCnt -= ret;
 		bp += ret;
+		if (file_bwlimitmax)
+			sleep_for_limit(nread, file_bwlimit);
 	}
 	return ret;
 }
@@ -187,7 +193,6 @@ struct map_struct *map_file(int fd, OFF_T len, int32 read_size, int32 blk_size)
 
 	return map;
 }
-
 
 /* slide the read window in the file */
 char *map_ptr(struct map_struct *map, OFF_T offset, int32 len)
@@ -268,6 +273,9 @@ char *map_ptr(struct map_struct *map, OFF_T offset, int32 len)
 		map->p_fd_offset += nread;
 		read_offset += nread;
 		read_size -= nread;
+
+		if (file_bwlimitmax)
+			sleep_for_limit(nread, file_bwlimit);
 	}
 
 	return map->p + align_fudge;

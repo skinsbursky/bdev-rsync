@@ -111,6 +111,8 @@ int munge_symlinks = 0;
 int size_only = 0;
 int daemon_bwlimit = 0;
 int bwlimit = 0;
+int file_bwlimit = 0;
+size_t file_bwlimitmax = 0;
 int fuzzy_basis = 0;
 size_t bwlimit_writemax = 0;
 int ignore_existing = 0;
@@ -309,7 +311,7 @@ static BOOL usermap_via_chown, groupmap_via_chown;
 #ifdef HAVE_SETVBUF
 static char *outbuf_mode;
 #endif
-static char *bwlimit_arg, *max_size_arg, *min_size_arg;
+static char *bwlimit_arg, *max_size_arg, *min_size_arg, *file_bwlimit_arg;
 static char tmp_partialdir[] = ".~tmp~";
 
 /** Local address to bind.  As a character string because it's
@@ -710,6 +712,7 @@ void usage(enum logcode F)
   rprintf(F,"     --devices               preserve device files (super-user only)\n");
   rprintf(F,"     --copy-devices          copy device contents as regular file\n");
   rprintf(F,"     --offset-in-mb          offset to sync start in megabytes\n");
+  rprintf(F,"     --file_bwlimit=RATE     limit file I/O bandwidth\n");
   rprintf(F,"     --specials              preserve special files\n");
   rprintf(F," -D                          same as --devices --specials\n");
   rprintf(F," -t, --times                 preserve modification times\n");
@@ -825,7 +828,7 @@ enum {OPT_VERSION = 1000, OPT_DAEMON, OPT_SENDER, OPT_EXCLUDE, OPT_EXCLUDE_FROM,
       OPT_READ_BATCH, OPT_WRITE_BATCH, OPT_ONLY_WRITE_BATCH, OPT_MAX_SIZE,
       OPT_NO_D, OPT_APPEND, OPT_NO_ICONV, OPT_INFO, OPT_DEBUG,
       OPT_USERMAP, OPT_GROUPMAP, OPT_CHOWN, OPT_BWLIMIT,
-      OPT_SERVER, OPT_COPY_DEVICES, OPT_OFFSET_IN_MB, OPT_REFUSED_BASE = 9000};
+      OPT_SERVER, OPT_COPY_DEVICES, OPT_OFFSET_IN_MB, OPT_FILE_BWLIMIT, OPT_REFUSED_BASE = 9000};
 
 static struct poptOption long_options[] = {
   /* longName, shortName, argInfo, argPtr, value, descrip, argDesc */
@@ -892,6 +895,7 @@ static struct poptOption long_options[] = {
   {"devices",          0,  POPT_ARG_VAL,    &preserve_devices, 1, 0, 0 },
   {"no-devices",       0,  POPT_ARG_VAL,    &preserve_devices, 0, 0, 0 },
   {"copy-devices",     0,  POPT_ARG_NONE,   &copy_devices, OPT_COPY_DEVICES, 0, 0 },
+  {"file-bwlimit",     0,  POPT_ARG_STRING, &file_bwlimit_arg, OPT_FILE_BWLIMIT, 0, 0 },
   {"offset-in-mb",     0,  POPT_ARG_INT,    &offset_in_mb, OPT_OFFSET_IN_MB, 0, 0 },
   {"specials",         0,  POPT_ARG_VAL,    &preserve_specials, 1, 0, 0 },
   {"no-specials",      0,  POPT_ARG_VAL,    &preserve_specials, 0, 0, 0 },
@@ -1759,6 +1763,7 @@ int parse_arguments(int *argc_p, const char ***argv_p)
 				groupmap_via_chown = True;
 			}
 			break;
+
 		case OPT_COPY_DEVICES:
 			if (!inplace) {
 				snprintf(err_buf, sizeof err_buf,
@@ -1766,6 +1771,7 @@ int parse_arguments(int *argc_p, const char ***argv_p)
 				return 0;
 			}
 			break;
+
 		case OPT_OFFSET_IN_MB:
 			if (!copy_devices) {
 				snprintf(err_buf, sizeof err_buf,
@@ -1773,7 +1779,25 @@ int parse_arguments(int *argc_p, const char ***argv_p)
 				return 0;
 			}
 			break;
+
+		case OPT_FILE_BWLIMIT:
+			{
+				OFF_T limit = parse_size_arg(&file_bwlimit_arg, 'K');
+				if (limit < 0) {
+					snprintf(err_buf, sizeof err_buf,
+						"--file-bwlimit value is invalid: %s\n", file_bwlimit_arg);
+					return 0;
+				}
+				file_bwlimit = (limit + 512) / 1024;
+				if (limit && !file_bwlimit) {
+					snprintf(err_buf, sizeof err_buf,
+						"--file-bwlimit value is too small: %s\n", file_bwlimit_arg);
+					return 0;
+				}
+			}
+			break;
 		}
+
 
 		case OPT_HELP:
 			usage(FINFO);
@@ -2245,6 +2269,12 @@ int parse_arguments(int *argc_p, const char ***argv_p)
 		bwlimit_writemax = (size_t)bwlimit * 128;
 		if (bwlimit_writemax < 512)
 			bwlimit_writemax = 512;
+	}
+
+	if (file_bwlimit) {
+		file_bwlimitmax = (size_t)file_bwlimit * 128;
+		if (file_bwlimitmax < 512)
+			file_bwlimitmax = 512;
 	}
 
 	if (sparse_files && inplace) {
@@ -2788,6 +2818,12 @@ void server_options(char **args, int *argc_p)
 
 	if (offset_in_mb) {
 		if (asprintf(&arg, "--offset-in-mb=%d", offset_in_mb) < 0)
+			goto oom;
+		args[ac++] = arg;
+	}
+
+	if (file_bwlimit) {
+		if (asprintf(&arg, "--file-bwlimit=%d", file_bwlimit) < 0)
 			goto oom;
 		args[ac++] = arg;
 	}

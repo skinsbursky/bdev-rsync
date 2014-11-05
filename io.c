@@ -153,7 +153,7 @@ static flist_ndx_list redo_list, hlink_list;
 
 static void read_a_msg(void);
 static void drain_multiplex_messages(void);
-static void sleep_for_limit(int bytes_written, int limit);
+void sleep_for_limit(int bytes_written, int limit);
 
 static void check_timeout(BOOL allow_keepalive, int keepalive_flags)
 {
@@ -1946,7 +1946,7 @@ void write_sum_head(int f, struct sum_struct *sum)
  * requested number of microseconds, this can become grossly inaccurate.
  * We therefore keep track of the bytes we've written over time and only
  * sleep when the accumulated delay is at least 1 tenth of a second. */
-static void sleep_for_limit(int bytes_written, int limit)
+void sleep_for_limit(int bytes_written, int limit)
 {
 	static struct timeval prior_tv;
 	static long total_written = 0;
