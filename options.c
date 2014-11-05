@@ -1773,23 +1773,11 @@ int parse_arguments(int *argc_p, const char ***argv_p)
 			break;
 
 		case OPT_OFFSET:
-			{
-				sync_offset = parse_size_arg(&offset_arg, 'M');
-				if (sync_offset < 0) {
-					snprintf(err_buf, sizeof err_buf,
-							"--offset value is invalid: %s\n", offset_arg);
-					return 0;
-				}
-
+			sync_offset = parse_size_arg(&offset_arg, 'M');
+			if (sync_offset < 0) {
 				snprintf(err_buf, sizeof err_buf,
-							"offset: %s\n", offset_arg);
-
-				if (!copy_devices) {
-					snprintf(err_buf, sizeof err_buf,
-							"You can only specify --offset with prior --copy-devices option\n");
-					return 0;
-				}
-
+						"--offset value is invalid: %s\n", offset_arg);
+				return 0;
 			}
 			break;
 
