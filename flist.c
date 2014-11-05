@@ -42,6 +42,7 @@ extern int xfer_dirs;
 extern int filesfrom_fd;
 extern int one_file_system;
 extern int copy_dirlinks;
+extern int copy_devices;
 extern int preserve_uid;
 extern int preserve_gid;
 extern int preserve_acls;
@@ -664,7 +665,7 @@ static void send_file_entry(int f, const char *fname, struct file_struct *file,
 #endif
 	strlcpy(lastname, fname, MAXPATHLEN);
 
-	if (S_ISREG(mode) || S_ISLNK(mode))
+	if (S_ISREG(mode) || S_ISLNK(mode) || (copy_devices && IS_DEVICE(file->mode)))
 		stats.total_size += F_LENGTH(file);
 }
 
@@ -1355,6 +1356,8 @@ struct file_struct *make_file(const char *fname, struct file_list *flist,
 	if (IS_DEVICE(st.st_mode)) {
 		tmp_rdev = st.st_rdev;
 		st.st_size = 0;
+		if (copy_devices)
+			update_device_fsize(thisname, &st);
 	} else if (IS_SPECIAL(st.st_mode))
 		st.st_size = 0;
 #endif
