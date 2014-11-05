@@ -1365,7 +1365,7 @@ struct file_struct *make_file(const char *fname, struct file_list *flist,
 
 	if (st.st_size < MB_TO_SIZE(offset_in_mb)) {
 		rprintf(FERROR_XFER,
-		    "[%s] offset is greated than file size: %s < %s\n",
+		    "[%s] offset is greated than file size: %s > %s\n",
 		    who_am_i(),
 		    comma_num(MB_TO_SIZE(offset_in_mb)),
 		    comma_num(st.st_size));
