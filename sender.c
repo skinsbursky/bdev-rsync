@@ -32,7 +32,7 @@ extern int logfile_format_has_i;
 extern int want_xattr_optim;
 extern int csum_length;
 extern int append_mode;
-extern int offset_in_mb;
+extern OFF_T sync_offset;
 extern int io_error;
 extern int flist_eof;
 extern int allowed_lull;
@@ -66,7 +66,7 @@ static struct sum_struct *receive_sums(int f)
 	struct sum_struct *s;
 	int32 i;
 	int lull_mod = protocol_version >= 31 ? 0 : allowed_lull * 5;
-	OFF_T offset = MB_TO_SIZE(offset_in_mb);
+	OFF_T offset = sync_offset;
 
 	if (!(s = new(struct sum_struct)))
 		out_of_memory("receive_sums");

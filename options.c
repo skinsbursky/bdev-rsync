@@ -176,7 +176,7 @@ char *sockopts = NULL;
 char *usermap = NULL;
 char *groupmap = NULL;
 int rsync_port = 0;
-int offset_in_mb = 0;
+OFF_T sync_offset = 0;
 int compare_dest = 0;
 int copy_dest = 0;
 int link_dest = 0;
@@ -311,7 +311,7 @@ static BOOL usermap_via_chown, groupmap_via_chown;
 #ifdef HAVE_SETVBUF
 static char *outbuf_mode;
 #endif
-static char *bwlimit_arg, *max_size_arg, *min_size_arg, *file_bwlimit_arg;
+static char *bwlimit_arg, *max_size_arg, *min_size_arg, *file_bwlimit_arg, *offset_arg;
 static char tmp_partialdir[] = ".~tmp~";
 
 /** Local address to bind.  As a character string because it's
@@ -711,7 +711,7 @@ void usage(enum logcode F)
   rprintf(F," -g, --group                 preserve group\n");
   rprintf(F,"     --devices               preserve device files (super-user only)\n");
   rprintf(F,"     --copy-devices          copy device contents as regular file\n");
-  rprintf(F,"     --offset-in-mb          offset to sync start in megabytes\n");
+  rprintf(F,"     --offset=OFFSET         file offset to start sync from\n");
   rprintf(F,"     --file_bwlimit=RATE     limit file I/O bandwidth\n");
   rprintf(F,"     --specials              preserve special files\n");
   rprintf(F," -D                          same as --devices --specials\n");
@@ -828,7 +828,7 @@ enum {OPT_VERSION = 1000, OPT_DAEMON, OPT_SENDER, OPT_EXCLUDE, OPT_EXCLUDE_FROM,
       OPT_READ_BATCH, OPT_WRITE_BATCH, OPT_ONLY_WRITE_BATCH, OPT_MAX_SIZE,
       OPT_NO_D, OPT_APPEND, OPT_NO_ICONV, OPT_INFO, OPT_DEBUG,
       OPT_USERMAP, OPT_GROUPMAP, OPT_CHOWN, OPT_BWLIMIT,
-      OPT_SERVER, OPT_COPY_DEVICES, OPT_OFFSET_IN_MB, OPT_FILE_BWLIMIT, OPT_REFUSED_BASE = 9000};
+      OPT_SERVER, OPT_COPY_DEVICES, OPT_OFFSET, OPT_FILE_BWLIMIT, OPT_REFUSED_BASE = 9000};
 
 static struct poptOption long_options[] = {
   /* longName, shortName, argInfo, argPtr, value, descrip, argDesc */
@@ -896,7 +896,7 @@ static struct poptOption long_options[] = {
   {"no-devices",       0,  POPT_ARG_VAL,    &preserve_devices, 0, 0, 0 },
   {"copy-devices",     0,  POPT_ARG_NONE,   &copy_devices, OPT_COPY_DEVICES, 0, 0 },
   {"file-bwlimit",     0,  POPT_ARG_STRING, &file_bwlimit_arg, OPT_FILE_BWLIMIT, 0, 0 },
-  {"offset-in-mb",     0,  POPT_ARG_INT,    &offset_in_mb, OPT_OFFSET_IN_MB, 0, 0 },
+  {"offset",           0,  POPT_ARG_STRING, &offset_arg, OPT_OFFSET, 0, 0 },
   {"specials",         0,  POPT_ARG_VAL,    &preserve_specials, 1, 0, 0 },
   {"no-specials",      0,  POPT_ARG_VAL,    &preserve_specials, 0, 0, 0 },
   {"links",           'l', POPT_ARG_VAL,    &preserve_links, 1, 0, 0 },
@@ -1772,11 +1772,24 @@ int parse_arguments(int *argc_p, const char ***argv_p)
 			}
 			break;
 
-		case OPT_OFFSET_IN_MB:
-			if (!copy_devices) {
+		case OPT_OFFSET:
+			{
+				sync_offset = parse_size_arg(&offset_arg, 'M');
+				if (sync_offset < 0) {
+					snprintf(err_buf, sizeof err_buf,
+							"--offset value is invalid: %s\n", offset_arg);
+					return 0;
+				}
+
 				snprintf(err_buf, sizeof err_buf,
-					    "You can only specify --offset-in-mb with prior --copy-devices option\n");
-				return 0;
+							"offset: %s\n", offset_arg);
+
+				if (!copy_devices) {
+					snprintf(err_buf, sizeof err_buf,
+							"You can only specify --offset with prior --copy-devices option\n");
+					return 0;
+				}
+
 			}
 			break;
 
@@ -2816,8 +2829,8 @@ void server_options(char **args, int *argc_p)
 	if (copy_devices)
 		args[ac++] = "--copy-devices";
 
-	if (offset_in_mb) {
-		if (asprintf(&arg, "--offset-in-mb=%d", offset_in_mb) < 0)
+	if (sync_offset) {
+		if (asprintf(&arg, "--offset=%ld", sync_offset) < 0)
 			goto oom;
 		args[ac++] = arg;
 	}

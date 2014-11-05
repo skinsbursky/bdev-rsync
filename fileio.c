@@ -34,7 +34,7 @@
 #define ALIGNED_LENGTH(len) ((((len) - 1) | (ALIGN_BOUNDRY-1)) + 1)
 
 extern int sparse_files;
-extern int offset_in_mb;
+extern OFF_T sync_offset;
 extern int file_bwlimit;
 extern int file_bwlimitmax;
 
@@ -187,7 +187,7 @@ struct map_struct *map_file(int fd, OFF_T len, int32 read_size, int32 blk_size)
 		read_size += blk_size - (read_size % blk_size);
 
 	map->fd = fd;
-	map->seek_offset = MB_TO_SIZE(offset_in_mb);
+	map->seek_offset = sync_offset;
 	map->file_size = len;
 	map->def_window_size = ALIGNED_LENGTH(read_size);
 

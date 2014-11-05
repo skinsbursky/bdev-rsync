@@ -23,7 +23,7 @@
 
 extern int checksum_seed;
 extern int protocol_version;
-extern int offset_in_mb;
+extern OFF_T sync_offset;
 
 /*
   a simple 32 bit checksum that can be upadted from either end
@@ -118,7 +118,7 @@ void file_checksum(const char *fname, const STRUCT_STAT *st_p, char *sum)
 	if (protocol_version >= 30) {
 		md5_begin(&m);
 
-		for (i = MB_TO_SIZE(offset_in_mb); i + CSUM_CHUNK <= len; i += CSUM_CHUNK) {
+		for (i = sync_offset; i + CSUM_CHUNK <= len; i += CSUM_CHUNK) {
 			md5_update(&m, (uchar *)map_ptr(buf, i, CSUM_CHUNK),
 				   CSUM_CHUNK);
 		}
@@ -131,7 +131,7 @@ void file_checksum(const char *fname, const STRUCT_STAT *st_p, char *sum)
 	} else {
 		mdfour_begin(&m);
 
-		for (i = MB_TO_SIZE(offset_in_mb); i + CSUM_CHUNK <= len; i += CSUM_CHUNK) {
+		for (i = sync_offset; i + CSUM_CHUNK <= len; i += CSUM_CHUNK) {
 			mdfour_update(&m, (uchar *)map_ptr(buf, i, CSUM_CHUNK),
 				      CSUM_CHUNK);
 		}

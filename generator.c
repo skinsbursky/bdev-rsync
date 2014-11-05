@@ -40,7 +40,7 @@ extern int preserve_xattrs;
 extern int preserve_links;
 extern int preserve_devices;
 extern int copy_devices;
-extern int offset_in_mb;
+extern OFF_T sync_offset;
 extern int preserve_specials;
 extern int preserve_hard_links;
 extern int preserve_executability;
@@ -689,7 +689,7 @@ static int generate_and_send_sums(int fd, OFF_T len, int f_out, int f_copy)
 	int32 i;
 	struct map_struct *mapbuf;
 	struct sum_struct sum;
-	OFF_T offset = MB_TO_SIZE(offset_in_mb);
+	OFF_T offset = sync_offset;
 
 	sum_sizes_sqroot(&sum, len - offset);
 	if (sum.count < 0)
@@ -1304,11 +1304,11 @@ static void recv_generator(char *fname, struct file_struct *file, int ndx,
 		stat_errno = errno;
 	}
 
-	if (sx.st.st_size < MB_TO_SIZE(offset_in_mb)) {
+	if (sx.st.st_size < sync_offset) {
 		rprintf(FERROR_XFER,
 				"[%s] offset is greated than file size: %s > %s\n",
 				who_am_i(),
-				comma_num(MB_TO_SIZE(offset_in_mb)),
+				comma_num(sync_offset),
 				comma_num(sx.st.st_size));
 		goto cleanup;
 	}
@@ -1857,7 +1857,7 @@ static void recv_generator(char *fname, struct file_struct *file, int ndx,
 
 	if (DEBUG_GTE(DELTASUM, 3)) {
 		rprintf(FINFO, "gen mapped %s of range %s - %s\n",
-			fnamecmp, big_num(MB_TO_SIZE(offset_in_mb)),
+			fnamecmp, big_num(sync_offset),
 			big_num(sx.st.st_size));
 	}
 

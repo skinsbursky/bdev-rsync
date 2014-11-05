@@ -43,7 +43,7 @@ extern int filesfrom_fd;
 extern int one_file_system;
 extern int copy_dirlinks;
 extern int copy_devices;
-extern int offset_in_mb;
+extern OFF_T sync_offset;
 extern int preserve_uid;
 extern int preserve_gid;
 extern int preserve_acls;
@@ -1363,11 +1363,11 @@ struct file_struct *make_file(const char *fname, struct file_list *flist,
 		st.st_size = 0;
 #endif
 
-	if (st.st_size < MB_TO_SIZE(offset_in_mb)) {
+	if (st.st_size < sync_offset) {
 		rprintf(FERROR_XFER,
 		    "[%s] offset is greated than file size: %s > %s\n",
 		    who_am_i(),
-		    comma_num(MB_TO_SIZE(offset_in_mb)),
+		    comma_num(sync_offset),
 		    comma_num(st.st_size));
 
 		exit_cleanup(RERR_FILEIO);

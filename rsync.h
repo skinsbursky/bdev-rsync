@@ -1293,5 +1293,3 @@ char *getpass(const char *prompt);
 #ifdef MAINTAINER_MODE
 const char *get_panic_action(void);
 #endif
-
-#define MB_TO_SIZE(mb)         (mb << 20)

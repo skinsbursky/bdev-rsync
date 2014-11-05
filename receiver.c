@@ -43,7 +43,7 @@ extern int preserve_xattrs;
 extern int basis_dir_cnt;
 extern int make_backups;
 extern int copy_devices;
-extern int offset_in_mb;
+extern OFF_T sync_offset;
 extern int cleanup_got_literal;
 extern int remove_source_files;
 extern int append_mode;
@@ -237,7 +237,7 @@ static int receive_data(int f_in, char *fname_r, int fd_r, OFF_T size_r,
 	struct map_struct *mapbuf;
 	struct sum_struct sum;
 	int32 len;
-	OFF_T offset = MB_TO_SIZE(offset_in_mb);
+	OFF_T offset = sync_offset;
 	OFF_T offset2;
 	char *data;
 	int32 i;
@@ -327,7 +327,7 @@ static int receive_data(int f_in, char *fname_r, int fd_r, OFF_T size_r,
 		}
 
 		i = -(i+1);
-		offset2 = i * (OFF_T)sum.blength + MB_TO_SIZE(offset_in_mb);
+		offset2 = i * (OFF_T)sum.blength + sync_offset;
 		len = sum.blength;
 		if (i == (int)sum.count-1 && sum.remainder != 0)
 			len = sum.remainder;
@@ -840,7 +840,7 @@ int recv_files(int f_in, int f_out, char *local_name)
 					full_fname(fname));
 			} else if (updating_basis_or_equiv)
 				cleanup_set(NULL, NULL, file, fd1, fd2);
-			if (lseek(fd2, offset_in_mb * 1024 * 1024, SEEK_SET) == -1) {
+			if (lseek(fd2, sync_offset, SEEK_SET) == -1) {
 				rsyserr(FERROR_XFER, errno, "seek %s failed",
 					full_fname(fname));
 				close(fd2);
