@@ -153,7 +153,7 @@ static flist_ndx_list redo_list, hlink_list;
 
 static void read_a_msg(void);
 static void drain_multiplex_messages(void);
-static void sleep_for_bwlimit(int bytes_written);
+static void sleep_for_limit(int bytes_written, int limit);
 
 static void check_timeout(BOOL allow_keepalive, int keepalive_flags)
 {
@@ -830,7 +830,7 @@ static char *perform_io(size_t needed, int flags)
 			stats.total_written += n;
 
 			if (bwlimit_writemax)
-				sleep_for_bwlimit(n);
+				sleep_for_limit(n, bwlimit);
 
 			if ((out->pos += n) == out->size) {
 				if (iobuf.raw_flushing_ends_before)
@@ -1946,7 +1946,7 @@ void write_sum_head(int f, struct sum_struct *sum)
  * requested number of microseconds, this can become grossly inaccurate.
  * We therefore keep track of the bytes we've written over time and only
  * sleep when the accumulated delay is at least 1 tenth of a second. */
-static void sleep_for_bwlimit(int bytes_written)
+static void sleep_for_limit(int bytes_written, int limit)
 {
 	static struct timeval prior_tv;
 	static long total_written = 0;
@@ -1961,12 +1961,12 @@ static void sleep_for_bwlimit(int bytes_written)
 	if (prior_tv.tv_sec) {
 		elapsed_usec = (start_tv.tv_sec - prior_tv.tv_sec) * ONE_SEC
 			     + (start_tv.tv_usec - prior_tv.tv_usec);
-		total_written -= (int64)elapsed_usec * bwlimit / (ONE_SEC/1024);
+		total_written -= (int64)elapsed_usec * limit / (ONE_SEC/1024);
 		if (total_written < 0)
 			total_written = 0;
 	}
 
-	sleep_usec = total_written * (ONE_SEC/1024) / bwlimit;
+	sleep_usec = total_written * (ONE_SEC/1024) / limit;
 	if (sleep_usec < ONE_SEC / 10) {
 		prior_tv = start_tv;
 		return;
@@ -1979,7 +1979,7 @@ static void sleep_for_bwlimit(int bytes_written)
 	gettimeofday(&prior_tv, NULL);
 	elapsed_usec = (prior_tv.tv_sec - start_tv.tv_sec) * ONE_SEC
 		     + (prior_tv.tv_usec - start_tv.tv_usec);
-	total_written = (sleep_usec - elapsed_usec) * bwlimit / (ONE_SEC/1024);
+	total_written = (sleep_usec - elapsed_usec) * limit / (ONE_SEC/1024);
 }
 
 void io_flush(int flush_it_all)
