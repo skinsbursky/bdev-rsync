@@ -120,7 +120,7 @@ int flush_write_file(int f)
 		wf_writeBufCnt -= ret;
 		bp += ret;
 		if (file_bwlimitmax)
-			sleep_for_limit(nread, file_bwlimit);
+			sleep_for_limit(ret, file_bwlimit);
 	}
 	return ret;
 }
