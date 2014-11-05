@@ -58,6 +58,12 @@ pipelining of file transfers to minimize latency costs
 .IP o 
 support for anonymous or authenticated rsync daemons (ideal for
 mirroring)
+.IP o 
+support for copying devices contents
+.IP o 
+support for file I/O bandwith limiting
+.IP o 
+support for file offset to start syncing from
 
 .PP 
 .SH "GENERAL"
@@ -445,6 +451,9 @@ to the detailed description below for a complete description.
  \-o, \-\-owner                 preserve owner (super\-user only)
  \-g, \-\-group                 preserve group
      \-\-devices               preserve device files (super\-user only)
+     \-\-copy-devices          copy device contents as regular file
+     \-\-offset=OFFSET         file offset to start sync from
+     \-\-file-bwlimit=RATE     limit file I/O bandwidth
      \-\-specials              preserve special files
  \-D                          same as \-\-devices \-\-specials
  \-t, \-\-times                 preserve modification times
@@ -1330,6 +1339,29 @@ This option causes rsync to transfer character and
 block device files to the remote system to recreate these devices.
 This option has no effect if the receiving rsync is not run as the
 super\-user (see also the \fB\-\-super\fP and \fB\-\-fake\-super\fP options).
+.IP 
+.IP "\fB\-\-copy-devices\fP"
+This option causes rsync to transfer character and
+block device file contents to the remote system.
+.IP
+This option requires "\fB\-\-inplace\fP" option and can be used with one only file being specified as source or target.
+.IP 
+.IP "\fB\-\-offset=OFFSET\fP"
+This option allows you to specify offset from the beginning of an each file to transfer.
+OFFSET value can be suffixed with a string to indicate a size multiplier, and may
+be a fractional value (e.g.  \(dq\&\fB\-\-offset=1.5m\fP\(dq\&).  If no suffix is specified,
+the value will be assumed to be in units of 1048576 bytes (as if \(dq\&M\(dq\& or \(dq\&MiB\(dq\& had
+been appended).  See the \fB\-\-max\-size\fP option for a description of all the
+available suffixes. A value of zero specifies no offset.
+.IP 
+.IP "\fB\-\-file-bwlimit=RATE\fP"
+This option allows you to specify the maximum transfer
+rate for the data read and write from or to file respectively, specified in units per second.  The
+RATE value can be suffixed with a string to indicate a size multiplier, and may
+be a fractional value (e.g.  \(dq\&\fB\-\-file-bwlimit=1.5m\fP\(dq\&).  If no suffix is specified,
+the value will be assumed to be in units of 1024 bytes (as if \(dq\&K\(dq\& or \(dq\&KiB\(dq\& had
+been appended).  See the \fB\-\-max\-size\fP option for a description of all the
+available suffixes. A value of zero specifies no limit.
 .IP 
 .IP "\fB\-\-specials\fP"
 This option causes rsync to transfer special files
