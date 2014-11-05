@@ -46,6 +46,7 @@ extern int msgs2stderr;
 extern int module_id;
 extern int read_only;
 extern int copy_devices;
+extern size_t sync_offset;
 extern int copy_links;
 extern int copy_dirlinks;
 extern int copy_unsafe_links;
@@ -344,8 +345,8 @@ static void output_summary(void)
 			human_num(total_written), human_num(total_read),
 			human_dnum((total_written + total_read)/(0.5 + (endtime - starttime)), 2));
 		rprintf(FINFO, "total size is %s  speedup is %s%s\n",
-			human_num(stats.total_size),
-			comma_dnum((double)stats.total_size / (total_written+total_read), 2),
+			human_num(stats.total_size-sync_offset),
+			comma_dnum((double)(stats.total_size-sync_offset) / (total_written+total_read), 2),
 			write_batch < 0 ? " (BATCH ONLY)" : dry_run ? " (DRY RUN)" : "");
 	}
 
