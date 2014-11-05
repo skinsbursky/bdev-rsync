@@ -1304,6 +1304,15 @@ static void recv_generator(char *fname, struct file_struct *file, int ndx,
 		stat_errno = errno;
 	}
 
+	if (sx.st.st_size < MB_TO_SIZE(offset_in_mb)) {
+		rprintf(FERROR_XFER,
+				"[%s] offset is greated than file size: %s > %s\n",
+				who_am_i(),
+				comma_num(MB_TO_SIZE(offset_in_mb)),
+				comma_num(sx.st.st_size));
+		goto cleanup;
+	}
+
 	if (missing_args == 2 && file->mode == 0) {
 		if (filter_list.head && check_filter(&filter_list, FINFO, fname, is_dir) < 0)
 			return;
