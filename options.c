@@ -2818,7 +2818,7 @@ void server_options(char **args, int *argc_p)
 		args[ac++] = "--copy-devices";
 
 	if (sync_offset) {
-		if (asprintf(&arg, "--offset=%ld", sync_offset) < 0)
+		if (asprintf(&arg, "--offset=%s", offset_arg) < 0)
 			goto oom;
 		args[ac++] = arg;
 	}
