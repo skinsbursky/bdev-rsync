@@ -45,6 +45,7 @@ extern int got_xfer_error;
 extern int msgs2stderr;
 extern int module_id;
 extern int read_only;
+extern int copy_devices;
 extern int copy_links;
 extern int copy_dirlinks;
 extern int copy_unsafe_links;
@@ -1314,6 +1315,11 @@ static int start_client(int argc, char *argv[])
 		}
 		remote_argv = argv += argc - 1;
 		remote_argc = argc = 1;
+	}
+
+	if (argc > 1 && copy_devices) {
+		rprintf(FERROR, "copy more than one file is not allowed with --copy_devices\n");
+		exit_cleanup(RERR_SYNTAX);
 	}
 
 	if (!rsync_port && remote_argc && !**remote_argv) /* Turn an empty arg into a dot dir. */
