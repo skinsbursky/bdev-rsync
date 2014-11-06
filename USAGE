@@ -1,0 +1,20 @@
+Usage examples of new ProfitBricks features
+
+1) General connection via SSH:
+
+rsync -avzW --inplace --copy-devices --offset=4m --file-bwlimit=100m <local device> 192.168.49.149:<remote device>
+
+where:
+	--inplace	- devices content copying is supported only if this
+			  option is set
+	--copy-devices	- instructs rsync, that device content have to be
+			  copied instead of the device file itself.
+	--offset	- file offset to sync from/to. IOW, the data will be
+			  synchronized starting from this offset. Before this
+			  offset data will remain unchanged.
+	--file-bwlimit	- file read/write bandwidth limit.
+
+	-W		- copy whole file. Without this option rsync will read
+			  both files, calculate checksums and copy only
+			  non-matching blocks. In case of fast network it makes
+			  no sense.
