@@ -1077,6 +1077,9 @@ static void daemon_usage(enum logcode F)
   rprintf(F,"     --log-file=FILE         override the \"log file\" setting\n");
   rprintf(F,"     --log-file-format=FMT   override the \"log format\" setting\n");
   rprintf(F,"     --sockopts=OPTIONS      specify custom TCP options\n");
+  rprintf(F,"     --copy-devices          copy device contents as regular file\n");
+  rprintf(F,"     --offset=OFFSET         file offset to start sync from\n");
+  rprintf(F,"     --file_bwlimit=RATE     limit file I/O bandwidth\n");
   rprintf(F," -v, --verbose               increase verbosity\n");
   rprintf(F," -4, --ipv4                  prefer IPv4\n");
   rprintf(F," -6, --ipv6                  prefer IPv6\n");
@@ -1091,6 +1094,10 @@ static struct poptOption long_daemon_options[] = {
   /* longName, shortName, argInfo, argPtr, value, descrip, argDesc */
   {"address",          0,  POPT_ARG_STRING, &bind_address, 0, 0, 0 },
   {"bwlimit",          0,  POPT_ARG_INT,    &daemon_bwlimit, 0, 0, 0 },
+  {"inplace",          0,  POPT_ARG_VAL,    &inplace, 1, 0, 0 },
+  {"copy-devices",     0,  POPT_ARG_NONE,   &copy_devices, OPT_COPY_DEVICES, 0, 0 },
+  {"file-bwlimit",     0,  POPT_ARG_STRING, &file_bwlimit_arg, OPT_FILE_BWLIMIT, 0, 0 },
+  {"offset",           0,  POPT_ARG_STRING, &offset_arg, OPT_OFFSET, 0, 0 },
   {"config",           0,  POPT_ARG_STRING, &config_file, 0, 0, 0 },
   {"daemon",           0,  POPT_ARG_NONE,   &daemon_opt, 0, 0, 0 },
   {"dparam",          'M', POPT_ARG_STRING, 0, 'M', 0, 0 },
@@ -1398,6 +1405,52 @@ int parse_arguments(int *argc_p, const char ***argv_p)
 
 				case 'v':
 					verbose++;
+					break;
+
+				case OPT_COPY_DEVICES:
+					if (!inplace) {
+						snprintf(err_buf, sizeof err_buf,
+							    "You can only specify --copy-devices with prior --inplace option\n");
+						return 0;
+					}
+					break;
+
+				case OPT_OFFSET:
+					{
+						sync_offset = parse_size_arg(&offset_arg, 'M');
+						if (sync_offset < 0) {
+							snprintf(err_buf, sizeof err_buf,
+									"--offset value is invalid: %s\n", offset_arg);
+							return 0;
+						}
+
+						snprintf(err_buf, sizeof err_buf,
+									"offset: %s\n", offset_arg);
+
+						if (!copy_devices) {
+							snprintf(err_buf, sizeof err_buf,
+									"You can only specify --offset with prior --copy-devices option\n");
+							return 0;
+						}
+
+					}
+					break;
+
+				case OPT_FILE_BWLIMIT:
+					{
+						OFF_T limit = parse_size_arg(&file_bwlimit_arg, 'K');
+						if (limit < 0) {
+							snprintf(err_buf, sizeof err_buf,
+								"--file-bwlimit value is invalid: %s\n", file_bwlimit_arg);
+							return 0;
+						}
+						file_bwlimit = (limit + 512) / 1024;
+						if (limit && !file_bwlimit) {
+							snprintf(err_buf, sizeof err_buf,
+								"--file-bwlimit value is too small: %s\n", file_bwlimit_arg);
+							return 0;
+						}
+					}
 					break;
 
 				default:
