@@ -1077,6 +1077,7 @@ static void daemon_usage(enum logcode F)
   rprintf(F,"     --log-file=FILE         override the \"log file\" setting\n");
   rprintf(F,"     --log-file-format=FMT   override the \"log format\" setting\n");
   rprintf(F,"     --sockopts=OPTIONS      specify custom TCP options\n");
+  rprintf(F,"     --inplace               update destination files in-place (SEE MAN PAGE)\n");
   rprintf(F,"     --copy-devices          copy device contents as regular file\n");
   rprintf(F,"     --offset=OFFSET         file offset to start sync from\n");
   rprintf(F,"     --file_bwlimit=RATE     limit file I/O bandwidth\n");
