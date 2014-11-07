@@ -3069,6 +3069,35 @@ case transfer logging is turned off.
 This overrides the \fBsocket options\fP setting in the
 rsyncd.conf file and has the same syntax.
 .IP 
+.IP "\fB\-\-inplace\fP"
+This option changes how rsync transfers a file when
+its data needs to be updated: instead of the default method of creating
+a new copy of the file and moving it into place when it is complete, rsync
+instead writes the updated data directly to the destination file.
+.IP 
+.IP "\fB\-\-copy-devices\fP"
+This option causes rsync to transfer character and
+block device file contents to the remote system.
+.IP
+This option requires "\fB\-\-inplace\fP" option and can be used with one only file being specified as source or target.
+.IP 
+.IP "\fB\-\-offset=OFFSET\fP"
+This option allows you to specify offset from the beginning of an each file to transfer.
+OFFSET value can be suffixed with a string to indicate a size multiplier, and may
+be a fractional value (e.g.  \(dq\&\fB\-\-offset=1.5m\fP\(dq\&).  If no suffix is specified,
+the value will be assumed to be in units of 1048576 bytes (as if \(dq\&M\(dq\& or \(dq\&MiB\(dq\& had
+been appended).  See the \fB\-\-max\-size\fP option for a description of all the
+available suffixes. A value of zero specifies no offset.
+.IP 
+.IP "\fB\-\-file-bwlimit=RATE\fP"
+This option allows you to specify the maximum transfer
+rate for the data read and write from or to file respectively, specified in units per second.  The
+RATE value can be suffixed with a string to indicate a size multiplier, and may
+be a fractional value (e.g.  \(dq\&\fB\-\-file-bwlimit=1.5m\fP\(dq\&).  If no suffix is specified,
+the value will be assumed to be in units of 1024 bytes (as if \(dq\&K\(dq\& or \(dq\&KiB\(dq\& had
+been appended).  See the \fB\-\-max\-size\fP option for a description of all the
+available suffixes. A value of zero specifies no limit.
+.IP 
 .IP "\fB\-v, \-\-verbose\fP"
 This option increases the amount of information the
 daemon logs during its startup phase.  After the client connects, the
