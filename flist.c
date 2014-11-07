@@ -866,7 +866,8 @@ static struct file_struct *recv_file_entry(int f, struct file_list *flist, int x
 		}
 		if (IS_DEVICE(mode))
 			extra_len += DEV_EXTRA_CNT * EXTRA_LEN;
-		file_length = 0;
+		if (!copy_devices)
+			file_length = 0;
 	} else if (protocol_version < 28)
 		rdev = MAKEDEV(0, 0);
 
