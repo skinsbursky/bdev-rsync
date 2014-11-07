@@ -1304,15 +1304,6 @@ static void recv_generator(char *fname, struct file_struct *file, int ndx,
 		stat_errno = errno;
 	}
 
-	if (sx.st.st_size < sync_offset) {
-		rprintf(FERROR_XFER,
-				"[%s] offset is greated than file size: %s > %s\n",
-				who_am_i(),
-				comma_num(sync_offset),
-				comma_num(sx.st.st_size));
-		goto cleanup;
-	}
-
 	if (missing_args == 2 && file->mode == 0) {
 		if (filter_list.head && check_filter(&filter_list, FINFO, fname, is_dir) < 0)
 			return;
@@ -1337,6 +1328,15 @@ static void recv_generator(char *fname, struct file_struct *file, int ndx,
 				is_dir ? "directory" : "file", fname);
 		}
 		return;
+	}
+
+	if (sx.st.st_size < sync_offset) {
+		rprintf(FERROR_XFER,
+				"[%s] offset is greated than file size: %s > %s\n",
+				who_am_i(),
+				comma_num(sync_offset),
+				comma_num(sx.st.st_size));
+		goto cleanup;
 	}
 
 	if (statret == 0 && !(sx.st.st_mode & S_IWUSR)
