@@ -712,7 +712,7 @@ void usage(enum logcode F)
   rprintf(F,"     --devices               preserve device files (super-user only)\n");
   rprintf(F,"     --copy-devices          copy device contents as regular file\n");
   rprintf(F,"     --offset=OFFSET         file offset to start sync from\n");
-  rprintf(F,"     --file_bwlimit=RATE     limit file I/O bandwidth\n");
+  rprintf(F,"     --file-bwlimit=RATE     limit file I/O bandwidth\n");
   rprintf(F,"     --specials              preserve special files\n");
   rprintf(F," -D                          same as --devices --specials\n");
   rprintf(F," -t, --times                 preserve modification times\n");
@@ -1080,7 +1080,7 @@ static void daemon_usage(enum logcode F)
   rprintf(F,"     --inplace               update destination files in-place (SEE MAN PAGE)\n");
   rprintf(F,"     --copy-devices          copy device contents as regular file\n");
   rprintf(F,"     --offset=OFFSET         file offset to start sync from\n");
-  rprintf(F,"     --file_bwlimit=RATE     limit file I/O bandwidth\n");
+  rprintf(F,"     --file-bwlimit=RATE     limit file I/O bandwidth\n");
   rprintf(F," -v, --verbose               increase verbosity\n");
   rprintf(F," -4, --ipv4                  prefer IPv4\n");
   rprintf(F," -6, --ipv6                  prefer IPv6\n");
