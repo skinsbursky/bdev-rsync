@@ -1,8 +1,9 @@
-Usage examples of new ProfitBricks features
+This file contains usage examples of new ProfitBricks's rsync features, such as
+"--copy_devices", "--offset" and "--file-bwlimit".
 
-1) General connection via SSH:
+1) Copy via SSH from another node:
 
-rsync -avzW --inplace --copy-devices --offset=4m --file-bwlimit=100m <local device> 192.168.49.149:<remote device>
+rsync -avzW -4 --inplace --copy-devices --offset=4m --file-bwlimit=100m <remote_node>:<remote device> <local device>
 
 where:
 	--inplace	- devices content copying is supported only if this
@@ -18,3 +19,31 @@ where:
 			  both files, calculate checksums and copy only
 			  non-matching blocks. In case of fast network it makes
 			  no sense.
+	-4		- use IPv4 protocol.
+
+2) Copy by using Rsync server, started on data source:
+
+Here is an example of rsync configuration file, allowing rsync deamon to share
+all the /dev/ contents in read-only mode:
+
+uid = root
+gid = root
+use chroot = yes
+read only = yes
+pid file = /var/run/rsyncd.pid
+
+[dev]
+       path = /dev
+       comment = whole devices area
+
+Apart of it, there is a global configuration file, usually located at /etc/default/rsync.
+Options in this file have to be changes as follows:
+
+RSYNC_ENABLE=true
+RSYNC_CONFIG_FILE=<path to rsync configuration file, specified as above>
+RSYNC_OPTS='--inplace --copy-devices --offset=4m --file-bwlimit=100m'
+
+In case of using rsync daemon, client have to copy block device contents as
+follows:
+
+rsync -avzW -4 --inplace --copy-devices --offset=4m --file-bwlimit=100m rsync://<remote_node><remote device> <local device>
