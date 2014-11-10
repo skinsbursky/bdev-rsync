@@ -125,18 +125,19 @@ static void rprint_progress(OFF_T ofs, OFF_T size, struct timeval *now,
 			 (int) remain % 60);
 	}
 
-	output_needs_newline = 0;
-	pct = ofs == size ? 100 : (int) (100.0 * ofs / size);
-	rprintf(FCLIENT, "\r%15s %3d%% %7.2f%s %s%s",
-		human_num(ofs), pct, rate, units, rembuf, eol);
-	if (!is_last) {
-		output_needs_newline = 1;
-		rflush(FCLIENT);
-	}
 	if (stats_fifo) {
 		fprintf(stats_fifo, "%s %s %s", human_num(sync_offset),
 				human_num(ofs), human_num(size));
 		fflush(stats_fifo);
+	} else {
+		output_needs_newline = 0;
+		pct = ofs == size ? 100 : (int) (100.0 * ofs / size);
+		rprintf(FCLIENT, "\r%15s %3d%% %7.2f%s %s%s",
+			human_num(ofs), pct, rate, units, rembuf, eol);
+		if (!is_last) {
+			output_needs_newline = 1;
+			rflush(FCLIENT);
+		}
 	}
 }
 
