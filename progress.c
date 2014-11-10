@@ -29,6 +29,8 @@ extern int need_unsorted_flist;
 extern int output_needs_newline;
 extern struct stats stats;
 extern struct file_list *cur_flist;
+extern OFF_T sync_offset;
+extern FILE *stats_fifo;
 
 #define PROGRESS_HISTORY_SECS 5
 
@@ -130,6 +132,11 @@ static void rprint_progress(OFF_T ofs, OFF_T size, struct timeval *now,
 	if (!is_last) {
 		output_needs_newline = 1;
 		rflush(FCLIENT);
+	}
+	if (stats_fifo) {
+		fprintf(stats_fifo, "%s %s %s", human_num(sync_offset),
+				human_num(ofs), human_num(size));
+		fflush(stats_fifo);
 	}
 }
 

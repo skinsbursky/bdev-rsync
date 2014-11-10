@@ -130,6 +130,7 @@ int delay_updates = 0;
 long block_size = 0; /* "long" because popt can't set an int32. */
 char *skip_compress = NULL;
 item_list dparam_list = EMPTY_ITEM_LIST;
+FILE *stats_fifo = NULL;
 
 /** Network address family. **/
 int default_af_hint
@@ -312,6 +313,7 @@ static BOOL usermap_via_chown, groupmap_via_chown;
 static char *outbuf_mode;
 #endif
 static char *bwlimit_arg, *max_size_arg, *min_size_arg, *file_bwlimit_arg, *offset_arg;
+static char *stats_fifo_arg;
 static char tmp_partialdir[] = ".~tmp~";
 
 /** Local address to bind.  As a character string because it's
@@ -713,6 +715,7 @@ void usage(enum logcode F)
   rprintf(F,"     --copy-devices          copy device contents as regular file\n");
   rprintf(F,"     --offset=OFFSET         file offset to start sync from\n");
   rprintf(F,"     --file-bwlimit=RATE     limit file I/O bandwidth\n");
+  rprintf(F,"     --stats-fifo=FIFO       FIFO to write trasfer statistics\n");
   rprintf(F,"     --specials              preserve special files\n");
   rprintf(F," -D                          same as --devices --specials\n");
   rprintf(F," -t, --times                 preserve modification times\n");
@@ -828,7 +831,8 @@ enum {OPT_VERSION = 1000, OPT_DAEMON, OPT_SENDER, OPT_EXCLUDE, OPT_EXCLUDE_FROM,
       OPT_READ_BATCH, OPT_WRITE_BATCH, OPT_ONLY_WRITE_BATCH, OPT_MAX_SIZE,
       OPT_NO_D, OPT_APPEND, OPT_NO_ICONV, OPT_INFO, OPT_DEBUG,
       OPT_USERMAP, OPT_GROUPMAP, OPT_CHOWN, OPT_BWLIMIT,
-      OPT_SERVER, OPT_COPY_DEVICES, OPT_OFFSET, OPT_FILE_BWLIMIT, OPT_REFUSED_BASE = 9000};
+      OPT_SERVER, OPT_COPY_DEVICES, OPT_OFFSET, OPT_FILE_BWLIMIT,
+      OPT_STATS_FIFO, OPT_REFUSED_BASE = 9000};
 
 static struct poptOption long_options[] = {
   /* longName, shortName, argInfo, argPtr, value, descrip, argDesc */
@@ -897,6 +901,7 @@ static struct poptOption long_options[] = {
   {"copy-devices",     0,  POPT_ARG_NONE,   &copy_devices, OPT_COPY_DEVICES, 0, 0 },
   {"file-bwlimit",     0,  POPT_ARG_STRING, &file_bwlimit_arg, OPT_FILE_BWLIMIT, 0, 0 },
   {"offset",           0,  POPT_ARG_STRING, &offset_arg, OPT_OFFSET, 0, 0 },
+  {"stats-fifo",       0,  POPT_ARG_STRING, &stats_fifo_arg, OPT_STATS_FIFO, 0, 0 },
   {"specials",         0,  POPT_ARG_VAL,    &preserve_specials, 1, 0, 0 },
   {"no-specials",      0,  POPT_ARG_VAL,    &preserve_specials, 0, 0, 0 },
   {"links",           'l', POPT_ARG_VAL,    &preserve_links, 1, 0, 0 },
@@ -1853,6 +1858,14 @@ int parse_arguments(int *argc_p, const char ***argv_p)
 			break;
 		}
 
+		case OPT_STATS_FIFO:
+			stats_fifo = fopen(stats_fifo_arg, "w");
+			if (!stats_fifo) {
+				snprintf(err_buf, sizeof err_buf,
+					"failed to open statistics fifo: %s\n", strerror(errno));
+				return 0;
+			}
+			break;
 
 		case OPT_HELP:
 			usage(FINFO);
