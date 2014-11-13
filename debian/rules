@@ -1,12 +1,11 @@
 #!/usr/bin/make -f
 
+DEB_CONFIGURE_EXTRA_FLAGS = --with-included-zlib=no
+
 %:
 	dh $@
 
 override_dh_install:
 	dh_install --fail-missing
-
-override_dh_auto_configure:
-	./configure --with-included-zlib=no
 
 override_dh_auto_test:
