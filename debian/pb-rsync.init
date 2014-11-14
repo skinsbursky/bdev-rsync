@@ -1,12 +1,12 @@
 #! /bin/sh
 
 ### BEGIN INIT INFO
-# Provides:          rsyncd
+# Provides:          pb-rsyncd
 # Required-Start:    $remote_fs $syslog
 # Required-Stop:     $remote_fs $syslog
 # Should-Start:      $named
 # Default-Start:     2 3 4 5
-# Default-Stop:      
+# Default-Stop:      0 1 6
 # Short-Description: fast remote file copy program daemon
 # Description:       rsync is a program that allows files to be copied to and
 #                    from remote machines in much the same way as rcp.
