@@ -10,6 +10,6 @@ Vcs-Git: git+ssh://gitweb/gitweb.cgi/ri/pb-rsync.git
 
 Package: pb-rsync
 Architecture: any
-Depends: $b-base (>= 3.0-6), ${misc:Depends}, ${shlibs:Depends}
+Depends: lsb-base (>= 3.0-6), ${misc:Depends}, ${shlibs:Depends}
 Conflicts: rsync
 Description: Rsync modified by PB guys
