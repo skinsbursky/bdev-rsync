@@ -1,3 +1,9 @@
+pb-rsync (1.0-5) wheezy; urgency=medium
+
+  * Temporary moved default file to pbdaemon package 
+
+ -- Alexander Kulbii <alexander.kulbii@profitbricks.com>  Fri, 21 Nov 2014 10:02:44 +0100
+
 pb-rsync (1.0-4) wheezy; urgency=medium
 
   * Changed names of init and default files for Debian
