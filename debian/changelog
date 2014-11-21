@@ -1,3 +1,9 @@
+pb-rsync (1.0-4) wheezy; urgency=medium
+
+  * Changed names of init and default files for Debian
+
+ -- Alexander Kulbii <alexander.kulbii@profitbricks.com>  Fri, 21 Nov 2014 09:44:34 +0100
+
 pb-rsync (1.0-3) wheezy; urgency=medium
 
   * Added dependency on lsb-base
