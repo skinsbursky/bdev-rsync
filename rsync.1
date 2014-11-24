@@ -63,7 +63,7 @@ support for copying devices contents
 .IP o 
 support for file I/O bandwith limiting
 .IP o 
-support for file offset to start syncing from
+support for offset within device to start syncing to/from
 
 .PP 
 .SH "GENERAL"
@@ -452,7 +452,7 @@ to the detailed description below for a complete description.
  \-g, \-\-group                 preserve group
      \-\-devices               preserve device files (super\-user only)
      \-\-copy-devices          copy device contents as regular file
-     \-\-offset=OFFSET         file offset to start sync from
+     \-\-offset=OFFSET         device offset to start sync to/from
      \-\-file-bwlimit=RATE     limit file I/O bandwidth
      \-\-stats-fifo=FIFO       alternate stream to output progress
      \-\-specials              preserve special files
@@ -1348,7 +1348,7 @@ block device file contents to the remote system.
 This option requires "\fB\-\-inplace\fP" option and can be used with one only file being specified as source or target.
 .IP 
 .IP "\fB\-\-offset=OFFSET\fP"
-This option allows you to specify offset from the beginning of an each file to transfer.
+This option allows to specify offset from the beginning of a device file to transfer.
 OFFSET value can be suffixed with a string to indicate a size multiplier, and may
 be a fractional value (e.g.  \(dq\&\fB\-\-offset=1.5m\fP\(dq\&).  If no suffix is specified,
 the value will be assumed to be in units of 1048576 bytes (as if \(dq\&M\(dq\& or \(dq\&MiB\(dq\& had
@@ -3092,7 +3092,7 @@ block device file contents to the remote system.
 This option requires "\fB\-\-inplace\fP" option and can be used with one only file being specified as source or target.
 .IP 
 .IP "\fB\-\-offset=OFFSET\fP"
-This option allows you to specify offset from the beginning of an each file to transfer.
+This option allows to specify offset from the beginning of a device file to transfer.
 OFFSET value can be suffixed with a string to indicate a size multiplier, and may
 be a fractional value (e.g.  \(dq\&\fB\-\-offset=1.5m\fP\(dq\&).  If no suffix is specified,
 the value will be assumed to be in units of 1048576 bytes (as if \(dq\&M\(dq\& or \(dq\&MiB\(dq\& had

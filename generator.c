@@ -1330,6 +1330,12 @@ static void recv_generator(char *fname, struct file_struct *file, int ndx,
 		return;
 	}
 
+	if (!(IS_DEVICE(sx.st.st_mode) && copy_devices))
+		/*
+		 * Disable sync offset for non-block device files
+		 */
+		sync_offset = 0;
+
 	if (sx.st.st_size < sync_offset) {
 		rprintf(FERROR_XFER,
 				"[%s] offset is greated than file size: %s > %s\n",
