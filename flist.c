@@ -1321,7 +1321,8 @@ struct file_struct *make_file(const char *fname, struct file_list *flist,
 		extra_len += EXTRA_LEN;
 #endif
 
-	if (always_checksum && am_sender && S_ISREG(st.st_mode)) {
+	if (always_checksum && am_sender &&
+	    (S_ISREG(st.st_mode) || (copy_devices && IS_DEVICE(st.st_mode))) ) {
 		file_checksum(thisname, &st, tmp_sum);
 		if (sender_keeps_checksum)
 			extra_len += SUM_EXTRA_CNT * EXTRA_LEN;
