@@ -792,8 +792,14 @@ int recv_files(int f_in, int f_out, char *local_name)
 			continue;
 		}
 
-		if ((IS_DEVICE(st.st_mode) && copy_devices))
-			update_device_size(fd1, &st);
+		if (IS_DEVICE(st.st_mode)) {
+			if (copy_devices)
+				update_device_size(fd1, &st);
+		} else
+			/*
+			 * Disable sync offset for non-block device files
+			*/
+			sync_offset = 0;
 
 		if (fd1 != -1 && S_ISDIR(st.st_mode) && fnamecmp == fname) {
 			/* this special handling for directories

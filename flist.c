@@ -1220,6 +1220,12 @@ struct file_struct *make_file(const char *fname, struct file_list *flist,
 		return NULL;
 	}
 
+	if (!IS_DEVICE(st.st_mode))
+		/*
+		 * Disable sync offset for non-block device files
+		 */
+		sync_offset = 0;
+
 	if (filter_level == NO_FILTERS)
 		goto skip_filters;
 
