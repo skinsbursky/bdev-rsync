@@ -1,3 +1,9 @@
+pb-rsync (1.1) UNRELEASED; urgency=low
+
+  * Option "--offset" now doesn't affect regular files
+
+ -- Stanislav Kinsbursky <stanislav.kinsbursky@profitbricks.com>  Mon, 24 Nov 2014 14:46:09 +0100
+
 pb-rsync (1.0-5) wheezy; urgency=medium
 
   * Temporary moved default file to pbdaemon package 
