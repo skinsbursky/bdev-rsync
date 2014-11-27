@@ -348,7 +348,7 @@ AC_CHECK_HEADERS(sys/fcntl.h sys/select.h fcntl.h sys/time.h sys/unistd.h \
     netdb.h malloc.h float.h limits.h iconv.h libcharset.h langinfo.h \
     sys/acl.h acl/libacl.h attr/xattr.h sys/xattr.h sys/extattr.h \
     popt.h popt/popt.h linux/falloc.h netinet/in_systm.h netinet/ip.h \
-    zlib.h)
+    zlib.h qwe.h)
 AC_HEADER_MAJOR
 
 AC_CACHE_CHECK([if makedev takes 3 args],rsync_cv_MAKEDEV_TAKES_3_ARGS,[
@@ -1100,6 +1100,19 @@ if test x"$enable_acl_support" = x"no" -o x"$enable_xattr_support" = x"no" -o x"
     fi
 fi
 
+# Support for LZ4
+
+AC_ARG_WITH(lz4-support,
+        AC_HELP_STRING([--with-lz4-support], [add LZ4 compression support]))
+
+AC_MSG_CHECKING([whether to support LZ4 compression])
+if test x"$with_lz4_support" = x"yes"; then
+    AC_CHECK_LIB(lz4, LZ4_compress, , [echo "Need liblz4.so around"; exit 1;])
+    AC_CHECK_HEADER(lz4.h, , [echo "Need lz4.h around"; exit 1;], )
+    AC_DEFINE(LZ4_SUPPORT, 1, [Define to 1 if using LZ4 compressor])
+else
+    AC_MSG_RESULT(no)
+fi
 case "$CC" in
 ' checker'*|checker*)
     AC_DEFINE(FORCE_FD_ZERO_MEMSET, 1, [Used to make "checker" understand that FD_ZERO() clears memory.])

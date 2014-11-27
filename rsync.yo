@@ -1,6 +1,6 @@
 mailto(rsync-bugs@samba.org)
 manpage(rsync)(1)(22 Jun 2014)()()
-manpagename(rsync)(a fast, versatile, remote (and local) file-copying tool)
+manpagename(rsync)(a fast, versatile, remote (and local) file-copying tool - with ProfitBricks extensions)
 manpagesynopsis()
 
 verb(Local:  rsync [OPTION...] SRC... [DEST]
@@ -47,6 +47,16 @@ itemization(
   it() pipelining of file transfers to minimize latency costs
   it() support for anonymous or authenticated rsync daemons (ideal for
        mirroring)
+)
+
+New (ProfitBricks) features are:
+
+itemization(
+  it() support for copying devices contents
+  it() support for file I/O bandwith limiting
+  it() support for offset within device to start syncing to/from
+  it() support for transfer progress output to a file
+  it() support LZ4 compression
 )
 
 manpagesection(GENERAL)
@@ -370,6 +380,10 @@ to the detailed description below for a complete description.  verb(
  -g, --group                 preserve group
      --devices               preserve device files (super-user only)
      --specials              preserve special files
+     --copy-devices          copy device contents as regular file
+     --offset=OFFSET         device offset to start sync to/from
+     --file-bwlimit=RATE     limit file I/O bandwidth
+     --stats-fifo=FIFO       alternate stream to output progress
  -D                          same as --devices --specials
  -t, --times                 preserve modification times
  -O, --omit-dir-times        omit directories from --times
@@ -422,6 +436,7 @@ to the detailed description below for a complete description.  verb(
  -z, --compress              compress file data during the transfer
      --compress-level=NUM    explicitly set compression level
      --skip-compress=LIST    skip compressing files with suffix in LIST
+     --lz4-compress          use LZ4 compressor instead of ZLIB
  -C, --cvs-exclude           auto-ignore files in the same way CVS does
  -f, --filter=RULE           add a file-filtering RULE
  -F                          same as --filter='dir-merge /.rsync-filter'
@@ -1162,6 +1177,42 @@ super-user (see also the bf(--super) and bf(--fake-super) options).
 
 dit(bf(--specials)) This option causes rsync to transfer special files
 such as named sockets and fifos.
+
+dit(bf(--copy-devices)) This option causes rsync to transfer character and
+block device file contents to the remote system.
+
+This option requires bf(--inplace) option and can be used with one only file
+being specified as source or target.
+
+dit(bf(--offset=OFFSET)) This option allows to specify offset from the
+beginning of a device file to transfer. OFFSET value can be suffixed with a
+string to indicate a size multiplier, and may be a fractional value (e.g.
+"bf(--offset=1.5m)". If no suffix is specified, the value will be assumed to be
+in units of 1048576 bytes (as if M or MiB had been appended). See the
+bf(--max-size) option for a description of all the available suffixes. A value
+of zero specifies no offset.
+
+dit(bf(--file-bwlimit=RATE)) This option allows you to specify the maximum
+transfer rate for the data read and write from or to file respectively,
+specified in units per second.  The RATE value can be suffixed with a string to
+indicate a size multiplier, and may be a fractional value (e.g.
+"bf(--file-bwlimit=1.5m)". If no suffix is specified, the value will be assumed
+to be in units of 1024 bytes (as if K or KiB had been appended).  See
+the bf(--max-size) option for a description of all the available suffixes. A
+value of zero specifies no limit.
+
+dit(bf(--stats-fifo=FIFO)) This option allows you to specify an alternate stream
+to output progress statistics.
+
+Please, note:
+
+1) This option suppresses statistics to STDERR.
+
+2) If file doesn't exist, rsync will create em(regular) file and write progress
+into it.
+
+3) Statistics if written as three numbers, separated by space: start offset,
+current offset and final size.
 
 dit(bf(-D)) The bf(-D) option is equivalent to bf(--devices) bf(--specials).
 
@@ -1957,6 +2008,12 @@ situation: a copy from a daemon rsync will add your skipped suffixes to
 its list of non-compressing files (and its list may be configured to a
 different default).
 
+dit(bf(--lz4-compress)) This option switches compression engine from ZLIB to
+LZ4, which is much faster and also requires less CPU power. Usefull when
+transfer bottleneck is in CPU, neither in network througput.
+
+Requires bf(--compress) option.
+
 dit(bf(--numeric-ids)) With this option rsync will transfer numeric group
 and user IDs rather than using user and group names and mapping them
 at both ends.
@@ -2666,6 +2723,34 @@ case transfer logging is turned off.
 
 dit(bf(--sockopts)) This overrides the bf(socket options) setting in the
 rsyncd.conf file and has the same syntax.
+
+dit(bf(--inplace)) This option changes how rsync transfers a file when
+its data needs to be updated: instead of the default method of creating
+a new copy of the file and moving it into place when it is complete, rsync
+instead writes the updated data directly to the destination file.
+
+dit(bf(--copy-devices)) This option causes rsync to transfer character and
+block device file contents to the remote system.
+
+This option requires bf(--inplace) option and can be used with one only file
+being specified as source or target.
+
+dit(bf(--offset=OFFSET)) This option allows to specify offset from the
+beginning of a device file to transfer. OFFSET value can be suffixed with a
+string to indicate a size multiplier, and may be a fractional value (e.g.
+"bf(--offset=1.5m)". If no suffix is specified, the value will be assumed to be
+in units of 1048576 bytes (as if M or MiB had been appended). See the
+bf(--max-size) option for a description of all the available suffixes. A value
+of zero specifies no offset.
+
+dit(bf(--file-bwlimit=RATE)) This option allows you to specify the maximum
+transfer rate for the data read and write from or to file respectively,
+specified in units per second.  The RATE value can be suffixed with a string to
+indicate a size multiplier, and may be a fractional value (e.g.
+"bf(--file-bwlimit=1.5m)". If no suffix is specified, the value will be assumed
+to be in units of 1024 bytes (as if K or KiB had been appended).  See
+the bf(--max-size) option for a description of all the available suffixes. A
+value of zero specifies no limit.
 
 dit(bf(-v, --verbose)) This option increases the amount of information the
 daemon logs during its startup phase.  After the client connects, the
