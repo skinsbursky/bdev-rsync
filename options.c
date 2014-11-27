@@ -78,6 +78,7 @@ int protocol_version = PROTOCOL_VERSION;
 int sparse_files = 0;
 int preallocate_files = 0;
 int do_compression = 0;
+int lz4_compression = 0;
 int def_compress_level = NOT_SPECIFIED;
 int am_root = 0; /* 0 = normal, 1 = root, 2 = --super, -1 = --fake-super */
 int am_server = 0;
@@ -776,6 +777,7 @@ void usage(enum logcode F)
   rprintf(F," -z, --compress              compress file data during the transfer\n");
   rprintf(F,"     --compress-level=NUM    explicitly set compression level\n");
   rprintf(F,"     --skip-compress=LIST    skip compressing files with a suffix in LIST\n");
+  rprintf(F,"     --lz4-compress          use LZ4 compressor instead of ZLIB\n");
   rprintf(F," -C, --cvs-exclude           auto-ignore files the same way CVS does\n");
   rprintf(F," -f, --filter=RULE           add a file-filtering RULE\n");
   rprintf(F," -F                          same as --filter='dir-merge /.rsync-filter'\n");
@@ -986,6 +988,7 @@ static struct poptOption long_options[] = {
   {"new-compress",     0,  POPT_ARG_VAL,    &do_compression, 2, 0, 0 },
   {"no-compress",      0,  POPT_ARG_VAL,    &do_compression, 0, 0, 0 },
   {"no-z",             0,  POPT_ARG_VAL,    &do_compression, 0, 0, 0 },
+  {"lz4-compress",     0,  POPT_ARG_VAL,   &lz4_compression, 1, 0, 0 },
   {"skip-compress",    0,  POPT_ARG_STRING, &skip_compress, 0, 0, 0 },
   {"compress-level",   0,  POPT_ARG_INT,    &def_compress_level, 0, 0, 0 },
   {0,                 'P', POPT_ARG_NONE,   0, 'P', 0, 0 },
@@ -2903,6 +2906,9 @@ void server_options(char **args, int *argc_p)
 
 	if (do_compression > 1)
 		args[ac++] = "--new-compress";
+
+	if (lz4_compression)
+		args[ac++] = "--lz4-compress";
 
 	if (remote_option_cnt) {
 		int j;
