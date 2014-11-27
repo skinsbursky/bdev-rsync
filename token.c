@@ -22,8 +22,10 @@
 #include "rsync.h"
 #include "itypes.h"
 #include <zlib.h>
+#include <lz4.h>
 
 extern int do_compression;
+extern int lz4_compression;
 extern int protocol_version;
 extern int module_id;
 extern int def_compress_level;
@@ -291,6 +293,83 @@ static char *obuf;
 #define OBUF_SIZE	AVAIL_OUT_SIZE(CHUNK_SIZE)
 #endif
 
+static void
+send_compressed_token(int f, int32 token, struct map_struct *buf, OFF_T offset,
+		    int32 nb)
+{
+	static int init_done, flush_pending;
+	int size = MAX(LZ4_compressBound(CHUNK_SIZE), MAX_DATA_COUNT+2);
+	int32 n, r;
+
+	if (last_token == -1) {
+		if (!init_done) {
+			if ((obuf = new_array(char, size)) == NULL)
+				out_of_memory("send_compressed_token");
+			rprintf(FINFO, "allocated output buffer of size %d\n", size);
+			init_done = 1;
+		}
+		last_run_end = 0;
+		run_start = token;
+		flush_pending = 0;
+	} else if (last_token == -2) {
+		run_start = token;
+	} else if (nb != 0 || token != last_token + 1
+		   || token >= run_start + 65536) {
+		/* output previous run */
+		r = run_start - last_run_end;
+		n = last_token - run_start;
+		if (r >= 0 && r <= 63) {
+			write_byte(f, (n==0? TOKEN_REL: TOKENRUN_REL) + r);
+		} else {
+			write_byte(f, (n==0? TOKEN_LONG: TOKENRUN_LONG));
+			write_int(f, run_start);
+		}
+		if (n != 0) {
+			write_byte(f, n);
+			write_byte(f, n >> 8);
+		}
+		last_run_end = last_token;
+		run_start = token;
+	}
+
+	last_token = token;
+	if (nb != 0 || flush_pending) {
+		int available_in, available_out = 0;
+		const char *next_in;
+
+		do {
+			char *ptr = obuf;
+			char *next_out = obuf + 2;
+
+			if (available_out == 0) {
+				available_in = MIN(nb, MAX_DATA_COUNT);
+				next_in = map_ptr(buf, offset, available_in);
+			} else
+				available_in /= 2;
+
+			available_out = LZ4_compress(next_in, next_out, available_in);
+			if (!available_out) {
+				rprintf(FERROR, "compress returned %d\n", available_out);
+				exit_cleanup(RERR_STREAMIO);
+			}
+			if (available_out <= MAX_DATA_COUNT) {
+				ptr[0] = DEFLATED_DATA + (available_out >> 8);
+				ptr[1] = available_out;
+
+				write_buf(f, ptr, available_out + 2);
+
+				available_out = 0;
+				nb -= available_in;
+				offset += available_in;
+			}
+		} while (nb != 0);
+		flush_pending = token == -2;
+	}
+	if (token == -1)
+		/* end of file - clean up */
+		write_byte(f, END_FLAG);
+}
+
 /* Send a deflated token */
 static void
 send_deflated_token(int f, int32 token, struct map_struct *buf, OFF_T offset,
@@ -444,6 +523,87 @@ static char *dbuf;
 static int32 rx_token;
 static int32 rx_run;
 
+
+static int32 recv_compressed_token(int f, char **data)
+{
+	static int32 saved_flag;
+	static int init_done;
+	int32 n, flag;
+	int size = MAX(LZ4_compressBound(CHUNK_SIZE), MAX_DATA_COUNT+2);
+	static const char *next_in;
+	static int avail_in;
+	int avail_out;
+
+	for (;;) {
+		switch (recv_state) {
+		case r_init:
+			if (!init_done) {
+				if (!(cbuf = new_array(char, MAX_DATA_COUNT))
+				    || !(dbuf = new_array(char, size)))
+					out_of_memory("recv_compressed_token");
+				init_done = 1;
+			}
+			recv_state = r_idle;
+			rx_token = 0;
+			break;
+		case r_idle:
+		case r_inflated:
+			if (saved_flag) {
+				flag = saved_flag & 0xff;
+				saved_flag = 0;
+			} else
+				flag = read_byte(f);
+			if ((flag & 0xC0) == DEFLATED_DATA) {
+				n = ((flag & 0x3f) << 8) + read_byte(f);
+				read_buf(f, cbuf, n);
+				next_in = (char *)cbuf;
+				avail_in = n;
+				recv_state = r_inflating;
+				break;
+			}
+
+			if (recv_state == r_inflated)
+				recv_state = r_idle;
+
+			if (flag == END_FLAG) {
+				/* that's all folks */
+				recv_state = r_init;
+				return 0;
+			}
+
+			/* here we have a token of some kind */
+			if (flag & TOKEN_REL) {
+				rx_token += flag & 0x3f;
+				flag >>= 6;
+			} else
+				rx_token = read_int(f);
+			if (flag & 1) {
+				rx_run = read_byte(f);
+				rx_run += read_byte(f) << 8;
+				recv_state = r_running;
+			}
+			return -1 - rx_token;
+
+		case r_inflating:
+			avail_out = LZ4_decompress_safe(next_in, dbuf, avail_in, size);
+			if (avail_out < 0) {
+				rprintf(FERROR, "uncompress failed: %d\n", avail_out);
+				exit_cleanup(RERR_STREAMIO);
+			}
+			recv_state = r_inflated;
+			*data = dbuf;
+			return avail_out;
+
+		case r_running:
+			++rx_token;
+			if (--rx_run == 0)
+				recv_state = r_idle;
+			return -1 - rx_token;
+		}
+	}
+
+}
+
 /* Receive a deflated token and inflate it */
 static int32 recv_deflated_token(int f, char **data)
 {
@@ -573,6 +733,49 @@ static int32 recv_deflated_token(int f, char **data)
 	}
 }
 
+static void see_uncompressed_token(char *buf, int32 len)
+{
+	static const char *next_in;
+	static int avail_in;
+	int avail_out;
+
+	int32 blklen;
+	char hdr[5];
+
+	avail_in = 0;
+	blklen = 0;
+	hdr[0] = 0;
+	do {
+		if (avail_in == 0 && len != 0) {
+			if (blklen == 0) {
+				/* Give it a fake stored-block header. */
+				next_in = hdr;
+				avail_in = 5;
+				blklen = len;
+				if (blklen > 0xffff)
+					blklen = 0xffff;
+				hdr[1] = blklen;
+				hdr[2] = blklen >> 8;
+				hdr[3] = ~hdr[1];
+				hdr[4] = ~hdr[2];
+			} else {
+				next_in = (char *)buf;
+				avail_in = blklen;
+				if (protocol_version >= 31) /* Newer protocols avoid a data-duplicating bug */
+					buf += blklen;
+				len -= blklen;
+				blklen = 0;
+			}
+		}
+		avail_out = LZ4_decompress_safe(next_in, dbuf, avail_in, LZ4_compressBound(CHUNK_SIZE));
+		if (avail_out < 0) {
+			rprintf(FERROR, "uncompress failed: %d\n", avail_out);
+			exit_cleanup(RERR_STREAMIO);
+		}
+
+	} while (len);
+}
+
 /*
  * put the data corresponding to a token that we've just returned
  * from recv_deflated_token into the decompressor's history buffer.
@@ -634,8 +837,12 @@ void send_token(int f, int32 token, struct map_struct *buf, OFF_T offset,
 {
 	if (!do_compression)
 		simple_send_token(f, token, buf, offset, n);
-	else
-		send_deflated_token(f, token, buf, offset, n, toklen);
+	else {
+		if (lz4_compression)
+			send_compressed_token(f, token, buf, offset, n);
+		else
+			send_deflated_token(f, token, buf, offset, n, toklen);
+	}
 }
 
 /*
@@ -651,7 +858,10 @@ int32 recv_token(int f, char **data)
 	if (!do_compression) {
 		tok = simple_recv_token(f,data);
 	} else {
-		tok = recv_deflated_token(f, data);
+		if (lz4_compression)
+			tok = recv_compressed_token(f, data);
+		else
+			tok = recv_deflated_token(f, data);
 	}
 	return tok;
 }
@@ -661,6 +871,10 @@ int32 recv_token(int f, char **data)
  */
 void see_token(char *data, int32 toklen)
 {
-	if (do_compression == 1)
-		see_deflate_token(data, toklen);
+	if (do_compression == 1) {
+		if (lz4_compression)
+			see_deflate_token(data, toklen);
+		else
+			see_uncompressed_token(data, toklen);
+	}
 }

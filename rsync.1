@@ -508,6 +508,7 @@ to the detailed description below for a complete description.
  \-z, \-\-compress              compress file data during the transfer
      \-\-compress\-level=NUM    explicitly set compression level
      \-\-skip\-compress=LIST    skip compressing files with suffix in LIST
+     \-\-lz4\-compress          use LZ4 compressor instead of ZLIB
  \-C, \-\-cvs\-exclude           auto\-ignore files in the same way CVS does
  \-f, \-\-filter=RULE           add a file\-filtering RULE
  \-F                          same as \-\-filter='\&dir\-merge /.rsync\-filter'\&
@@ -2262,6 +2263,11 @@ This list will be replaced by your \fB\-\-skip\-compress\fP list in all but one
 situation: a copy from a daemon rsync will add your skipped suffixes to
 its list of non\-compressing files (and its list may be configured to a
 different default).
+.IP 
+.IP "\fB\-\-lz4\-compress\fP"
+This option swithes compression engine from ZLIB to LZ4, which is much faster
+and also requires less CPU power. Usefull when transfer bottleneck is in CPU,
+neither in network througput.
 .IP 
 .IP "\fB\-\-numeric\-ids\fP"
 With this option rsync will transfer numeric group
