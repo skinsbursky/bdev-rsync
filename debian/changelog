@@ -1,4 +1,11 @@
-pb-rsync (1.1) UNRELEASED; urgency=low
+pb-rsync (1.2) wheezy; urgency=low
+
+  * Added LZ4 compression
+
+ -- Stanislav Kinsbursky <stanislav.kinsbursky@profitbricks.com>  Mon, 24 Nov 2014 14:46:09 +0100
+
+
+pb-rsync (1.1) wheezy; urgency=low
 
   * Option "--offset" now doesn't affect regular files
 

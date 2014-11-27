@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 
-DEB_CONFIGURE_EXTRA_FLAGS = --with-included-zlib=no
+DEB_CONFIGURE_EXTRA_FLAGS = --with-included-zlib=no --with_lz4_support=yes
 
 %:
 	dh $@

@@ -2,7 +2,7 @@ Source: pb-rsync
 Maintainer: Alexander Kulbii <alexander.kulbii@profitbricks.com>
 Section: libs
 Priority: optional
-Build-Depends: debhelper (>= 9), dh-autoreconf, libini-config-dev
+Build-Depends: debhelper (>= 9), dh-autoreconf, libini-config-dev, liblz4-dev
 Standards-Version: 3.9.5
 Homepage: http://gitweb/gitweb.cgi/ri/pb-rsync.git
 Vcs-Browser: http://gitweb/gitweb.cgi/ri/pb-rsync.git
