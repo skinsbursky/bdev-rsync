@@ -1109,6 +1109,7 @@ AC_MSG_CHECKING([whether to support LZ4 compression])
 if test x"$with_lz4_support" = x"yes"; then
     AC_CHECK_LIB(lz4, LZ4_compress, , [echo "Need liblz4.so around"; exit 1;])
     AC_CHECK_HEADER(lz4.h, , [echo "Need lz4.h around"; exit 1;], )
+    AC_DEFINE(LZ4_SUPPORT, 1, [Define to 1 if using LZ4 compressor])
 else
     AC_MSG_RESULT(no)
 fi

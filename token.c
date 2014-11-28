@@ -25,7 +25,9 @@
 #include <lz4.h>
 
 extern int do_compression;
+#ifdef LZ4_SUPPORT
 extern int lz4_compression;
+#endif
 extern int protocol_version;
 extern int module_id;
 extern int def_compress_level;
@@ -293,6 +295,7 @@ static char *obuf;
 #define OBUF_SIZE	AVAIL_OUT_SIZE(CHUNK_SIZE)
 #endif
 
+#ifdef LZ4_SUPPORT
 static void
 send_compressed_token(int f, int32 token, struct map_struct *buf, OFF_T offset,
 		    int32 nb)
@@ -369,6 +372,7 @@ send_compressed_token(int f, int32 token, struct map_struct *buf, OFF_T offset,
 		/* end of file - clean up */
 		write_byte(f, END_FLAG);
 }
+#endif
 
 /* Send a deflated token */
 static void
@@ -523,7 +527,7 @@ static char *dbuf;
 static int32 rx_token;
 static int32 rx_run;
 
-
+#ifdef LZ4_SUPPORT
 static int32 recv_compressed_token(int f, char **data)
 {
 	static int32 saved_flag;
@@ -603,6 +607,7 @@ static int32 recv_compressed_token(int f, char **data)
 	}
 
 }
+#endif
 
 /* Receive a deflated token and inflate it */
 static int32 recv_deflated_token(int f, char **data)
@@ -733,6 +738,7 @@ static int32 recv_deflated_token(int f, char **data)
 	}
 }
 
+#ifdef LZ4_SUPPORT
 static void see_uncompressed_token(char *buf, int32 len)
 {
 	static const char *next_in;
@@ -775,6 +781,7 @@ static void see_uncompressed_token(char *buf, int32 len)
 
 	} while (len);
 }
+#endif
 
 /*
  * put the data corresponding to a token that we've just returned
@@ -838,9 +845,11 @@ void send_token(int f, int32 token, struct map_struct *buf, OFF_T offset,
 	if (!do_compression)
 		simple_send_token(f, token, buf, offset, n);
 	else {
+#ifdef LZ4_SUPPORT
 		if (lz4_compression)
 			send_compressed_token(f, token, buf, offset, n);
 		else
+#endif
 			send_deflated_token(f, token, buf, offset, n, toklen);
 	}
 }
@@ -858,9 +867,11 @@ int32 recv_token(int f, char **data)
 	if (!do_compression) {
 		tok = simple_recv_token(f,data);
 	} else {
+#ifdef LZ4_SUPPORT
 		if (lz4_compression)
 			tok = recv_compressed_token(f, data);
 		else
+#endif
 			tok = recv_deflated_token(f, data);
 	}
 	return tok;
@@ -872,9 +883,11 @@ int32 recv_token(int f, char **data)
 void see_token(char *data, int32 toklen)
 {
 	if (do_compression == 1) {
+#ifdef LZ4_SUPPORT
 		if (lz4_compression)
-			see_deflate_token(data, toklen);
-		else
 			see_uncompressed_token(data, toklen);
+		else
+#endif
+			see_deflate_token(data, toklen);
 	}
 }
