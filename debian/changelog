@@ -1,3 +1,9 @@
+pb-rsync (1.5.2-2) wheezy; urgency=low
+
+  * Package for wheezy
+
+ -- Stanislav Kinsbursky <stanislav.kinsbursky@profitbricks.com>  Mon, 01 Dec 2014 18:41:21 +0100
+
 pb-rsync (1.5.2-1) jessie; urgency=low
 
   * Package for jessie
