@@ -1,3 +1,9 @@
+pb-rsync (1.5-1) jessie; urgency=medium
+
+  * Changed name of service in init script
+
+ -- Alexander Kulbii <alexander.kulbii@profitbricks.com>  Mon, 01 Dec 2014 11:26:22 +0100
+
 pb-rsync (1.4-1.1) jessie; urgency=low
 
   * Bring configure back to the repo
