@@ -308,7 +308,6 @@ send_compressed_token(int f, int32 token, struct map_struct *buf, OFF_T offset,
 		if (!init_done) {
 			if ((obuf = new_array(char, size)) == NULL)
 				out_of_memory("send_compressed_token");
-			rprintf(FINFO, "allocated output buffer of size %d\n", size);
 			init_done = 1;
 		}
 		last_run_end = 0;
@@ -396,7 +395,6 @@ send_deflated_token(int f, int32 token, struct map_struct *buf, OFF_T offset,
 			}
 			if ((obuf = new_array(char, OBUF_SIZE)) == NULL)
 				out_of_memory("send_deflated_token");
-			rprintf(FINFO, "allocated output buffer of size %d\n", OBUF_SIZE);
 			init_done = 1;
 		} else
 			deflateReset(&tx_strm);
@@ -474,7 +472,6 @@ send_deflated_token(int f, int32 token, struct map_struct *buf, OFF_T offset,
 					n -= 4;
 				}
 				if (n > 0) {
-					rprintf(FINFO, "%s: write %d\n", __func__, n+2);
 					obuf[0] = DEFLATED_DATA + (n >> 8);
 					obuf[1] = n;
 					write_buf(f, obuf, n+2);
@@ -508,7 +505,6 @@ send_deflated_token(int f, int32 token, struct map_struct *buf, OFF_T offset,
 					r, tx_strm.avail_in);
 				exit_cleanup(RERR_STREAMIO);
 			}
-			rprintf(FINFO, "%s: tx_strm.avail_out: %d\n", __func__, tx_strm.avail_out);
 		} while (toklen > 0);
 #else
 		toklen++;
@@ -634,7 +630,6 @@ static int32 recv_deflated_token(int f, char **data)
 				if (!(cbuf = new_array(char, MAX_DATA_COUNT))
 				    || !(dbuf = new_array(char, AVAIL_OUT_SIZE(CHUNK_SIZE))))
 					out_of_memory("recv_deflated_token");
-				rprintf(FINFO, "%s: allocated cbuf of size %d\n", __func__, AVAIL_OUT_SIZE(CHUNK_SIZE));
 				init_done = 1;
 			} else {
 				inflateReset(&rx_strm);
@@ -725,7 +720,6 @@ static int32 recv_deflated_token(int f, char **data)
 				rprintf(FERROR, "inflate returned %d (%d bytes)\n", r, n);
 				exit_cleanup(RERR_STREAMIO);
 			}
-			rprintf(FINFO, "%s: rx_strm.avail_in: %d\n", __func__, rx_strm.avail_in);
 			if (rx_strm.avail_in == 0)
 				recv_state = r_inflated;
 			if (n != 0) {
@@ -831,7 +825,6 @@ static void see_deflate_token(char *buf, int32 len)
 			rprintf(FERROR, "inflate (token) returned %d\n", r);
 			exit_cleanup(RERR_STREAMIO);
 		}
-		rprintf(FINFO, "%s: len: %d, rx_strm.avail_out: %d\n", __func__, len, rx_strm.avail_in);
 	} while (len || rx_strm.avail_out == 0);
 #else
 	buf++; len++;

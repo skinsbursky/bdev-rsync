@@ -1,3 +1,9 @@
+pb-rsync (1.5.1) whezzy; urgency=low
+
+  * Remove excessive debug
+
+ -- Stanislav Kinsbursky <stanislav.kinsbursky@profitbricks.com>  Mon, 01 Dec 2014 18:33:01 +0100
+
 pb-rsync (1.5-2) wheezy; urgency=low
 
   * Rebuild the package for wheezy
