@@ -1,3 +1,22 @@
+pb-rsync (1.5-1) jessie; urgency=medium
+
+  * Changed name of service in init script
+
+ -- Alexander Kulbii <alexander.kulbii@profitbricks.com>  Mon, 01 Dec 2014 11:26:22 +0100
+
+pb-rsync (1.4-1.1) jessie; urgency=low
+
+  * Bring configure back to the repo
+  * removed autoconf from rules
+
+ -- Stanislav Kinsbursky <stanislav.kinsbursky@profitbricks.com>  Fri, 28 Nov 2014 18:53:59 +0100
+
+pb-rsync (1.4-1) jessie; urgency=medium
+
+  * Changed variable to override rule in debian rules
+
+ -- Alexander Kulbii <alexander.kulbii@profitbricks.com>  Fri, 28 Nov 2014 18:23:21 +0100
+
 pb-rsync (1.3) wheezy; urgency=low
 
   * All the man changes moved to rsync.yo
