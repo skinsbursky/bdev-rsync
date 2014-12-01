@@ -1,3 +1,9 @@
+pb-rsync (1.5.2-1) jessie; urgency=low
+
+  * Package for jessie
+
+ -- Stanislav Kinsbursky <stanislav.kinsbursky@profitbricks.com>  Mon, 01 Dec 2014 18:33:38 +0100
+
 pb-rsync (1.5.1) whezzy; urgency=low
 
   * Remove excessive debug
