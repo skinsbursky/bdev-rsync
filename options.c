@@ -1422,32 +1422,21 @@ int parse_arguments(int *argc_p, const char ***argv_p)
 					verbose++;
 					break;
 
-				case OPT_COPY_DEVICES:
-					if (!inplace) {
-						snprintf(err_buf, sizeof err_buf,
-							    "You can only specify --copy-devices with prior --inplace option\n");
-						return 0;
-					}
-					break;
+                case OPT_COPY_DEVICES:
+                    /* The value has already been set by popt, but
+                     * we need to remember that we're using a
+                     * non-default setting. */
+                    copy_devices = 1;
+                    break;
 
 				case OPT_OFFSET:
 					{
 						sync_offset = parse_size_arg(&offset_arg, 'M');
 						if (sync_offset < 0) {
-							snprintf(err_buf, sizeof err_buf,
+							rprintf(FERROR,
 									"--offset value is invalid: %s\n", offset_arg);
-							return 0;
+					        goto daemon_error;
 						}
-
-						snprintf(err_buf, sizeof err_buf,
-									"offset: %s\n", offset_arg);
-
-						if (!copy_devices) {
-							snprintf(err_buf, sizeof err_buf,
-									"You can only specify --offset with prior --copy-devices option\n");
-							return 0;
-						}
-
 					}
 					break;
 
@@ -1455,15 +1444,15 @@ int parse_arguments(int *argc_p, const char ***argv_p)
 					{
 						OFF_T limit = parse_size_arg(&file_bwlimit_arg, 'K');
 						if (limit < 0) {
-							snprintf(err_buf, sizeof err_buf,
+							rprintf(FERROR,
 								"--file-bwlimit value is invalid: %s\n", file_bwlimit_arg);
-							return 0;
+					        goto daemon_error;
 						}
 						file_bwlimit = (limit + 512) / 1024;
 						if (limit && !file_bwlimit) {
-							snprintf(err_buf, sizeof err_buf,
+							rprintf(FERROR,
 								"--file-bwlimit value is too small: %s\n", file_bwlimit_arg);
-							return 0;
+					        goto daemon_error;
 						}
 					}
 					break;
@@ -1475,6 +1464,18 @@ int parse_arguments(int *argc_p, const char ***argv_p)
 					    poptStrerror(opt));
 					goto daemon_error;
 				}
+			}
+
+            if (copy_devices && !inplace) {
+				rprintf(FERROR,
+                        "You can only specify --copy-devices with --inplace option\n");
+				goto daemon_error;
+            }
+
+            if (sync_offset && !copy_devices) {
+				rprintf(FERROR,
+						"You can only specify --offset with --copy-devices option\n");
+				goto daemon_error;
 			}
 
 			if (dparam_list.count && !set_dparams(1))
@@ -1833,11 +1834,10 @@ int parse_arguments(int *argc_p, const char ***argv_p)
 			break;
 
 		case OPT_COPY_DEVICES:
-			if (!inplace) {
-				snprintf(err_buf, sizeof err_buf,
-					    "You can only specify --copy-devices with prior --inplace option\n");
-				return 0;
-			}
+			/* The value has already been set by popt, but
+			 * we need to remember that we're using a
+			 * non-default setting. */
+			copy_devices = 1;
 			break;
 
 		case OPT_OFFSET:
@@ -1936,6 +1936,24 @@ int parse_arguments(int *argc_p, const char ***argv_p)
 #endif
 		}
 	}
+
+    if (copy_devices && !inplace) {
+        snprintf(err_buf, sizeof err_buf,
+                 "You can only specify --copy-devices with --inplace option\n");
+        return 0;
+    }
+
+    if (sync_offset && !copy_devices) {
+        snprintf(err_buf, sizeof err_buf,
+                 "You can only specify --offset with --copy-devices option\n");
+        return 0;
+    }
+
+    if (copy_links && copy_devices) {
+        snprintf(err_buf, sizeof err_buf,
+                 "Options --copy-links and --copy-devices are mutually exclusive\n");
+        return 0;
+    }
 
 	if (human_readable > 1 && argc == 2 && !am_server) {
 		/* Allow the old meaning of 'h' (--help) on its own. */
