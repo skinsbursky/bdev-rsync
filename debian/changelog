@@ -1,3 +1,10 @@
+pb-rsync (1.5.3) wheezy; urgency=low
+
+  * Fixed mess in options parsing
+  * Options --copy-links and --copy-devices are mutually exclusive now
+
+ -- Stanislav Kinsbursky <stanislav.kinsbursky@profitbricks.com>  Thu, 21 May 2015 18:00:03 +0200
+
 pb-rsync (1.5.2-2) wheezy; urgency=low
 
   * Package for wheezy
