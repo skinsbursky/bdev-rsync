@@ -1,3 +1,9 @@
+pb-rsync (1.5.4) wheezy; urgency=low
+
+  * Removed mutual exclusion between --copy-links and --copy-devices options
+
+ -- Stanislav Kinsbursky <stanislav.kinsbursky@profitbricks.com>  Thu, 18 Jun 2015 17:34:41 +0200
+
 pb-rsync (1.5.3) wheezy; urgency=low
 
   * Fixed mess in options parsing
