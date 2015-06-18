@@ -1937,23 +1937,17 @@ int parse_arguments(int *argc_p, const char ***argv_p)
 		}
 	}
 
-    if (copy_devices && !inplace) {
-        snprintf(err_buf, sizeof err_buf,
-                 "You can only specify --copy-devices with --inplace option\n");
-        return 0;
-    }
+	if (copy_devices && !inplace) {
+		snprintf(err_buf, sizeof err_buf,
+				"You can only specify --copy-devices with --inplace option\n");
+		return 0;
+	}
 
-    if (sync_offset && !copy_devices) {
-        snprintf(err_buf, sizeof err_buf,
-                 "You can only specify --offset with --copy-devices option\n");
-        return 0;
-    }
-
-    if (copy_links && copy_devices) {
-        snprintf(err_buf, sizeof err_buf,
-                 "Options --copy-links and --copy-devices are mutually exclusive\n");
-        return 0;
-    }
+	if (sync_offset && !copy_devices) {
+		snprintf(err_buf, sizeof err_buf,
+				"You can only specify --offset with --copy-devices option\n");
+		return 0;
+	}
 
 	if (human_readable > 1 && argc == 2 && !am_server) {
 		/* Allow the old meaning of 'h' (--help) on its own. */
