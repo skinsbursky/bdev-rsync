@@ -1691,7 +1691,7 @@ static void recv_generator(char *fname, struct file_struct *file, int ndx,
 	fnamecmp_type = FNAMECMP_FNAME;
 
 	if (statret == 0 && !S_ISREG(sx.st.st_mode) &&
-	    !(copy_devices && IS_DEVICE(sx.st.st_mode))) {
+	    !copy_devices) {
 		if (delete_item(fname, sx.st.st_mode, del_opts | DEL_FOR_FILE) != 0)
 			goto cleanup;
 		statret = -1;
